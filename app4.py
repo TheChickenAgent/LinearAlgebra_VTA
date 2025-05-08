@@ -162,7 +162,8 @@ def sle_practise():
             pdf.cell(0, 10, f"- Result: {result}", ln=True)
 
         # Get PDF as bytes
-        pdf_bytes = pdf.output(dest='S').encode('latin1')
+        pdf_str = str(pdf.output(dest='S'))
+        pdf_bytes = pdf_str.encode('latin1')
         return io.BytesIO(pdf_bytes)
 
     # === Main UI ===

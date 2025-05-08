@@ -6,6 +6,11 @@ from dotenv import load_dotenv
 from openai import OpenAI
 
 
+# Load environment variables from a .env file
+load_dotenv()
+OPENAI_API = os.getenv('OPENAI_API_KEY')
+
+
 def intro():
     st.write("# Virtual Teaching Assistant for Linear Algebra.👋 :mortar_board: :computer: :books: :school:")
     st.write("## :warning: THIS TOOL IS UNDER DEVELOPMENT :construction_worker:")
@@ -25,13 +30,7 @@ def intro():
 
 
 def plotting_demo():
-    # Load environment variables from a .env file
-    load_dotenv()
-    OPENAI_API = os.getenv('OPENAI_API_KEY')
-
-    ##### Streamlit app
-
-    st.title("ChatGPT-like clone")
+    st.title("Open QA chat")
 
     client = OpenAI(api_key=OPENAI_API)
 
@@ -45,7 +44,7 @@ def plotting_demo():
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-    if prompt := st.chat_input("What is up?"):
+    if prompt := st.chat_input("Ask a question about linear algebra."):
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.markdown(prompt)
@@ -62,11 +61,50 @@ def plotting_demo():
             response = st.write_stream(stream)
         st.session_state.messages.append({"role": "assistant", "content": response})
 
+def generate_question():
+    st.write("#### Question:")
+    st.write("Is the following system of equations consistent?")
+    st.write("1. 2x + 3y = 5")
+    st.write("2. 4x + 6y = 10")
+
+def sle_practise():
+    st.write("# Practise SLE")
+    st.write("### The system will generate True/False questions about solving linear systems of equations.")
+
+    generate_question_but = st.button("Generate a question")
+    if generate_question_but:
+        generate_question()
+        true_button = st.button("True")
+        false_button = st.button("False")
+        submit_button = st.button("Submit")
+
+        if "user_answer" not in st.session_state:
+            st.session_state["user_answer"] = None
+
+        if true_button:
+            st.session_state["user_answer"] = "True"
+        elif false_button:
+            st.session_state["user_answer"] = "False"
+
+        if submit_button:
+            if st.session_state["user_answer"]:
+                st.write(f"You selected: {st.session_state['user_answer']}")
+            else:
+                st.write("Please select an answer before submitting.")
+
+        #answer = st.radio(
+        #    "",
+        #    ["True", "False"],
+        #    index=None,
+        #)
+        #if answer:
+        #    print(answer)
+        
+
 page_names_to_funcs = {
-    "—": intro,
-    "Linear Algebra chat Demo": plotting_demo,
-    #"Mapping Demo": mapping_demo,
-    #"DataFrame Demo": data_frame_demo
+    "Main menu": intro,
+    "Linear Algebra chat": plotting_demo,
+    "Practise SLE": sle_practise,
 }
 
 demo_name = st.sidebar.selectbox("Select a practice mode:", page_names_to_funcs.keys())
