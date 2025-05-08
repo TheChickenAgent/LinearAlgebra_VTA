@@ -1,3 +1,5 @@
+# streamlit run app2.py
+
 import streamlit as st
 import os
 from dotenv import load_dotenv
@@ -5,29 +7,19 @@ from openai import OpenAI
 
 
 def intro():
-    st.write("# Welcome to Streamlit! 👋")
-    st.sidebar.success("Select a demo above.")
+    st.write("# Virtual Teaching Assistant for Linear Algebra.👋 :mortar_board: :computer: :books: :school:")
+    st.write("## :warning: THIS TOOL IS UNDER DEVELOPMENT :construction_worker:")
+    #st.sidebar.success("Select a practice mode.")
 
     st.markdown(
         """
-        Streamlit is an open-source app framework built specifically for
-        Machine Learning and Data Science projects.
-
-        **👈 Select a demo from the dropdown on the left** to see some examples
-        of what Streamlit can do!
-
-        ### Want to learn more?
-
-        - Check out [streamlit.io](https://streamlit.io)
-        - Jump into our [documentation](https://docs.streamlit.io)
-        - Ask a question in our [community
-          forums](https://discuss.streamlit.io)
-
-        ### See more complex demos
-
-        - Use a neural net to [analyze the Udacity Self-driving Car Image
-          Dataset](https://github.com/streamlit/demo-self-driving)
-        - Explore a [New York City rideshare dataset](https://github.com/streamlit/demo-uber-nyc-pickups)
+        This app is a virtual teaching assistant for linear algebra, powered by an LLM.
+        It is designed to help students learn linear algebra concepts, like:
+        - solving linear systems of equations;
+        - matrix algebra;
+        - determinants;
+        - eigenvalues and eigenvectors;
+        through the use of a chat interface and true/false questions.
     """
     )
 
@@ -77,5 +69,5 @@ page_names_to_funcs = {
     #"DataFrame Demo": data_frame_demo
 }
 
-demo_name = st.sidebar.selectbox("Choose a demo", page_names_to_funcs.keys())
+demo_name = st.sidebar.selectbox("Select a practice mode:", page_names_to_funcs.keys())
 page_names_to_funcs[demo_name]()
