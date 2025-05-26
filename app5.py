@@ -2,6 +2,8 @@
 
 import streamlit as st
 import os
+import pandas as pd
+import re
 from dotenv import load_dotenv
 from openai import OpenAI
 import io
@@ -15,7 +17,7 @@ OPENAI_API = os.getenv('OPENAI_API_KEY')
 embedding = OpenAIEmbeddings(model="text-embedding-3-large", openai_api_key=OPENAI_API)
 db_openai = Chroma(persist_directory="./vectordb/openai_vectorDB/", embedding_function=embedding) #for existing database
 
-def get_page_numbers(page_numbers: list[str]) -> list[int]:
+def get_page_numbers(page_numbers: list[str]) -> list[str]:
     """
     Get the page numbers from the metadata.
 
@@ -38,6 +40,26 @@ def get_page_numbers(page_numbers: list[str]) -> list[int]:
 
     # Now we need to string them again
     return [str(i) for i in int_page_numbers]
+
+def extract_matrix(text: str) -> pd.DataFrame | None:
+    """
+    Extract a matrix from a LaTeX formatted string and return it as a pandas DataFrame.
+
+    Args:
+        text (str): The input string containing the LaTeX matrix.
+
+    Returns:
+        pd.DataFrame or None: A DataFrame representing the matrix; or nothing if no matrix is found.
+    """
+    # Use regex to find the matrix in LaTeX format
+    match = re.search(r'\\begin\{pmatrix\}(.*?)\\end\{pmatrix\}', text)
+    if match:
+        matrix_content = match.group(1).strip()
+        rows = [row.strip().split('&') for row in matrix_content.split('\\') if row.strip()]
+        matrix = [[entry.strip() for entry in row] for row in rows]
+        return pd.DataFrame(matrix)
+    else:
+        return None
 
 
 def intro():
@@ -89,25 +111,35 @@ def chat():
 
         # Build custom prompt
         custom_prompt = (
-            "You are an assistant for question-answering tasks. Use the following pieces of "
-            "retrieved context to answer the question. If you don't know the answer, say that you "
-            "don't know."
+            "You are an assistant for question-answering tasks in linear algebra."
+            "Use the following pieces of retrieved context to answer the question."
+            "If you don't know the answer, say that you don't know."
             "\n\nContext:\n" + context + "\n\nQuestion:\n" + query
         )
+
+        print(st.session_state.messages)
+        st.session_state.messages.append({"role": "assistant", "content": custom_prompt})
+
 
         with st.chat_message("assistant"):
             stream = llm.chat.completions.create(
                 model=st.session_state["openai_model"],
+                #messages=[{"role": "assistant", "content": custom_prompt}] if len(st.session_state.messages) == 1 else [{"role": m["role"], "content": m["content"]} for m in st.session_state.messages],
                 #messages=[
                 #    {"role": "assistant", "content": custom_prompt}
                 #],
                 messages=[{"role": m["role"], "content": m["content"]} for m in st.session_state.messages],
                 stream=True,
             )
+            #print(stream.choices[0].message.content) #--> feed this into preprocessor
+            #preprocessing --> check matrix, if exists, then split into list of strings and st.latex for matrix. Stream list[str].
+            #print(type(stream.choices[0].message.content)) #string
             response = st.write_stream(stream)
             if references:
                 st.write(f"References: pages {", ".join(references[:-1])}, and {references[-1]}")
         st.session_state.messages.append({"role": "assistant", "content": response})
+
+        print(st.session_state.messages)
 
 def generate_questions():
     
