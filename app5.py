@@ -10,6 +10,7 @@ import io
 from fpdf import FPDF
 from langchain_openai import OpenAIEmbeddings
 from langchain_chroma import Chroma
+import time
 
 # Load environment variables from a .env file
 load_dotenv()
@@ -36,6 +37,11 @@ def get_page_numbers(page_numbers: list[str]) -> list[str]:
         else:
             page_number = int(page_number)
             int_page_numbers.append(page_number)
+
+    # Unique the page numbers
+    int_page_numbers = list(set(int_page_numbers))
+
+    # Sort the page numbers
     int_page_numbers.sort()
 
     # Now we need to string them again
@@ -79,6 +85,10 @@ def intro():
     """
     )
 
+def stream_string_data(text: str):
+    for word in text.split(" "):
+        yield word + " "
+        time.sleep(0.02)
 
 def chat():
     st.title("Open QA chat")
@@ -92,53 +102,60 @@ def chat():
         st.session_state.messages = []
 
     for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
+        if message["role"] == "references":
+            with st.chat_message("references", avatar="📖"):
+                st.markdown(message["content"])
+        else:
+            with st.chat_message(message["role"]):
+                st.markdown(message["content"])
 
     if query := st.chat_input("Ask a question about linear algebra."):
         st.session_state.messages.append({"role": "user", "content": query})
         with st.chat_message("user"):
             st.markdown(query)
-
-        print(query)
+        #print(query)
 
         # Retrieve relevant context from the vector database
         retrieved_docs = db_openai.similarity_search(query, k=4)
         context = "\n\n".join(doc.page_content for doc in retrieved_docs)
-        #references = [doc.metadata.get("page", "N/A") for doc in docs]
         references = get_page_numbers([doc.metadata['page'] for doc in retrieved_docs])
         print(references)
 
         # Build custom prompt
+        # Combine message history with the custom prompt as system message
         custom_prompt = (
-            "You are an assistant for question-answering tasks in linear algebra."
-            "Use the following pieces of retrieved context to answer the question."
-            "If you don't know the answer, say that you don't know."
-            "\n\nContext:\n" + context + "\n\nQuestion:\n" + query
+            "You are an assistant for question-answering tasks in linear algebra. "
+            "Use the following pieces of retrieved context to answer the question. "
+            "Please use LaTeX formatting for mathematical expressions by writing them between dollar signs."
+            "For example, to write a matrix, use $\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}$. "
+            "If you don't know the answer, say that you don't know. "
+            "\n\nContext:\n" + context
         )
 
-        print(st.session_state.messages)
-        st.session_state.messages.append({"role": "assistant", "content": custom_prompt})
+        # Prepare messages: system prompt + previous messages + latest user query
+        messages = [{"role": "system", "content": custom_prompt}]
+        messages += [{"role": m["role"], "content": m["content"]} for m in st.session_state.messages if m["role"] != "references"]
+        # Overwrite the last user message to ensure it includes the context
+        if messages and messages[-1]["role"] == "user":
+            messages[-1]["content"] = query
 
 
         with st.chat_message("assistant"):
             stream = llm.chat.completions.create(
                 model=st.session_state["openai_model"],
-                #messages=[{"role": "assistant", "content": custom_prompt}] if len(st.session_state.messages) == 1 else [{"role": m["role"], "content": m["content"]} for m in st.session_state.messages],
-                #messages=[
-                #    {"role": "assistant", "content": custom_prompt}
-                #],
-                messages=[{"role": m["role"], "content": m["content"]} for m in st.session_state.messages],
+                messages=messages,
                 stream=True,
             )
-            #print(stream.choices[0].message.content) #--> feed this into preprocessor
-            #preprocessing --> check matrix, if exists, then split into list of strings and st.latex for matrix. Stream list[str].
-            #print(type(stream.choices[0].message.content)) #string
             response = st.write_stream(stream)
-            if references:
-                st.write(f"References: pages {", ".join(references[:-1])}, and {references[-1]}")
+        if references:
+            with st.chat_message("references", avatar="📖"):
+                if len(references) == 1:
+                    ref = f"Reference: page {references[0]}"
+                else:
+                    ref = f"References: pages {", ".join(references[:-1])}, and {references[-1]}"
+                st.write(ref)
         st.session_state.messages.append({"role": "assistant", "content": response})
-
+        st.session_state.messages.append({"role": "references", "content": ref})
         print(st.session_state.messages)
 
 def generate_questions():
