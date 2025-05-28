@@ -77,6 +77,7 @@ def chat():
 
     if "openai_model" not in st.session_state:
         st.session_state["openai_model"] = "gpt-3.5-turbo"
+        #st.session_state["openai_model"] = "o4-mini"
 
     if "messages" not in st.session_state:
         st.session_state.messages = []
@@ -165,7 +166,7 @@ def generate_questions():
     ]
     return questions
 
-def sle_practise():
+def practice_true_false_questions():
     questions = generate_questions()
     num_questions = len(questions)
 
@@ -200,7 +201,7 @@ def sle_practise():
 
     def calculate_score():
         return sum(
-            1 for i, q in enumerate(questions)
+            1 for i, q in enumerate(st.session_state.generated_questions)
             if st.session_state.user_answers[i] == q["answer"]
         )
 
@@ -230,13 +231,12 @@ def sle_practise():
         pdf.set_font("Arial", 'B', 14)
         pdf.cell(0, 10, "Quiz Review", ln=True)
         pdf.set_font("Arial", size=12)
-        pdf.cell(0, 10, f"Final Score: {score} / {num_questions}", ln=True)
-
-        for i, q in enumerate(questions):
+        pdf.cell(0, 10, f"Final Score: {score} / {st.session_state.num_questions_final}", ln=True)
+        #for i, q in enumerate()
+        for i, q in enumerate(st.session_state.generated_questions):
             user_ans = st.session_state.user_answers[i]
             correct = q["answer"]
             result = "Correct" if user_ans == correct else "Incorrect"
-
             pdf.ln(5)
             pdf.set_font("Arial", 'B', 12)
             pdf.multi_cell(0, 10, f"Question {i+1}: {q['question']}")
@@ -251,80 +251,186 @@ def sle_practise():
         return io.BytesIO(pdf_bytes)
 
     # === Main UI ===
-    st.write("# Practise SLE")
-    st.write("The system will generate True/False questions about solving linear systems of equations.")
-    index = st.session_state.question_index
-    question = questions[index]
+    st.write("# Practise True/False Questions")
+    st.write("The system will generate True/False questions about Linear Algebra. You can now choose which topics you want to practice.")
+    # Topic selection with radio buttons (max 5 active)
+    topics = [
+        "Systems of linear equations, Gaussian elimination",
+        "Vector equations, Matrix",
+        "Solution sets and Linear independence",
+        "Linear Transformations, Matrix algebra",
+        "The Inverse of a Matrix",
+        "Determinants, Perspective projections",
+        "Vector Spaces",
+        "Eigenvalues and Eigenvectors",
+        "Diagonalization",
+        "Orthogonality and Symmetric Matrices"
+    ]
 
-    #st.title("Linear Algebra: True/False Quiz")
-    st.write(f"### Question {index + 1} of {num_questions}")
-    st.write(question["question"])
+    # Topic selection UI
+    if "topics_submitted" not in st.session_state:
+        st.session_state.topics_submitted = False
 
-    # Show previous answer if present
-    previous_answer = st.session_state.user_answers[index]
-    default_index = ["True", "False"].index("True" if previous_answer else "False") if previous_answer is not None else None
+    if "generated_questions" not in st.session_state:
+        st.session_state.generated_questions = None
 
-    user_choice = st.radio(
-        "Select your answer:",
-        options=["True", "False"],
-        index=default_index if default_index is not None else None,
-        key=f"radio_{index}"
-    )
-
-    # Submit button
-    if st.button("Submit Answer") and user_choice is not None:
-        submit_answer(user_choice)
-
-    # Feedback
-    if st.session_state.submitted[index]:
-        correct = st.session_state.user_answers[index] == question["answer"]
-        if correct:
-            st.success("Correct!")
-        else:
-            st.error("Incorrect.")
-
-    # Navigation buttons
-    col1, col2 = st.columns(2)
-    with col1:
-        if index > 0:
-            st.button("Previous Question", on_click=go_to_previous_question)
-    with col2:
-        if index < num_questions - 1:
-            st.button("Next Question", on_click=go_to_next_question)
-
-    # Show score & generate review
-    if all_questions_answered() and not st.session_state.show_score:
-        if st.button("Finish and Show Score"):
-            st.session_state.show_score = True
-            #st.session_state.review_file = True
-
-    if st.session_state.show_score:
-        score = calculate_score()
-        st.markdown(f"## ✅ Final Score: {score} / {num_questions}")
+    if not st.session_state.topics_submitted:
+        selected_topics = st.multiselect(
+            "Select up to 5 topics to practice:",
+            topics,
+            max_selections=5
+        )
+        if len(selected_topics) == 5:
+            st.info("Maximum of 5 topics selected.")
+        st.session_state.selected_topics = selected_topics
         
-        ## Markdown option
-        #md_data = generate_review_markdown()
-        #st.download_button(
-        #    "Download Review as Markdown",
-        #    md_data,
-        #    file_name="quiz_review.md"
-        #)
-
-        ## PDF option
-        pdf_data = generate_review_pdf()
-        st.download_button(
-            label="Download Review as PDF",
-            data=pdf_data,
-            file_name="quiz_review.pdf",
-            mime="application/pdf"
+        # Slider for number of questions
+        num_questions_slider = st.slider(
+            "Select the number of questions to practice:",
+            min_value=1,
+            max_value=10,
+            value=len(selected_topics),
+            step=1
         )
 
+        # Button to generate questions
+        if st.button("Generate Questions"):
+            if not selected_topics:
+                st.warning("Please select at least one topic.")
+            else:
+                st.session_state.topics_submitted = True
+                st.session_state.selected_topics_final = selected_topics
+                st.session_state.num_questions_final = num_questions_slider
+        st.stop()
+    elif st.session_state.generated_questions is None:
+        # Hide topic selection and slider after questions are generated
+        with st.spinner("Generating questions, please wait..."):
+            num_questions = str(st.session_state.num_questions_final)
+            topics_str = ", ".join(st.session_state.selected_topics_final)
+            custom_prompt = (
+                "You are a tutor for generating True/False statements in Linear Algebra. "
+                "Generate exactly " + num_questions + " True/False questions based on the selected topics. "
+                "Please format as follows:\n"
+                "- Each question should start with 'Q:' followed by the question text.\n"
+                "- Each explanation should start with 'E:' followed by the explanation text.\n"
+                "- Each answer should start with 'A:' followed by 'True' or 'False'.\n"
+                "For example:\n"
+                "Q: The determinant of a matrix is always non-negative.\n"
+                "E: The determinant can be negative depending on the matrix. For example, $\\begin{pmatrix} 1 & 0 \\\\ 0 & -1 \\end{pmatrix}$.\n"
+                "A: False\n"
+                "Please use LaTeX formatting for mathematical expressions by writing them between dollar signs."
+                "For example, to write a matrix, use $\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}$. "
+                "\n\nSelected topics:\n" + topics_str
+            )
+            llm = OpenAI(api_key=OPENAI_API)
+
+            if "openai_model" not in st.session_state:
+                st.session_state["openai_model"] = "gpt-3.5-turbo"
+
+            # Use the correct message format for OpenAI
+            response = llm.chat.completions.create(
+                model=st.session_state["openai_model"],
+                messages= [{"role": "system","content": custom_prompt}],
+                stream=False,
+            )
+            response_content = response.choices[0].message.content
+            # Process the response to extract questions and answers
+            questions = []
+            explanations = []
+            answers = []
+            for line in response_content.split("\n"):
+                line = line.strip()
+                if line.startswith("Q:"):
+                    question = line[2:].strip()
+                    questions.append(question)
+                elif line.startswith("E:"):
+                    explanation = line[2:].strip()
+                    explanations.append(explanation)
+                elif line.startswith("A:"):
+                    answer = line[2:].strip().lower() == "true"
+                    answers.append(answer)
+            if len(questions) != len(answers) or len(questions) != st.session_state.num_questions_final:	
+                st.error("Error: The number of questions and answers do not match the requested number.")
+            time.sleep(1)  # Simulate processing time
+            # Store generated questions and answers in session state
+            st.session_state.generated_questions = [
+                {"question": q, "explanation": e, "answer": a} for q, e, a in zip(questions, explanations, answers)
+            ]
+            print(st.session_state.generated_questions)
+            st.session_state.question_index = 0
+            st.session_state.submitted = [False] * len(questions)
+            st.session_state.user_answers = [None] * len(questions)
+            st.session_state.show_score = False
+            st.session_state.review_md = None
+
+    # Display all questions with separate True/False buttons
+    if st.session_state.generated_questions is not None:
+        st.success("Questions generated!")
+        st.markdown(
+            f"**Selected topics:** {', '.join(st.session_state.selected_topics_final)}  \n"
+            f"**Number of questions:** {st.session_state.num_questions_final}"
+        )
+        st.write("### Answer the following questions:")
+        for idx, question_data in enumerate(st.session_state.generated_questions):
+            st.write(f"**Question {idx + 1}:** {question_data['question']}")
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button(f"True", key=f"true_btn_{idx}", disabled=st.session_state.submitted[idx]):
+                    st.session_state.user_answers[idx] = True
+                    st.session_state.submitted[idx] = True
+            with col2:
+                if st.button(f"False", key=f"false_btn_{idx}", disabled=st.session_state.submitted[idx]):
+                    st.session_state.user_answers[idx] = False
+                    st.session_state.submitted[idx] = True
+
+            # Show feedback if answered
+            if st.session_state.submitted[idx]:
+                correct_answer = question_data['answer']
+                explanation = question_data['explanation']
+                user_answer = st.session_state.user_answers[idx]
+                if user_answer == correct_answer:
+                    st.success(f"Question {idx + 1}: Correct! 🎉\n\nExplanation: {explanation}")
+                else:
+                    st.error(f"Question {idx + 1}: Incorrect. The correct answer is {'True' if correct_answer else 'False'}.\n\nExplanation: {explanation}")
+
+        # Optionally, show score or review after all questions are answered
+        if all(st.session_state.submitted):
+            score = sum(
+                1 for i, q in enumerate(st.session_state.generated_questions)
+                if st.session_state.user_answers[i] == q["answer"]
+            )
+            st.info(f"Quiz complete! Your score: {score} / {len(st.session_state.generated_questions)}")
+
+            ## PDF option
+            pdf_data = generate_review_pdf()
+            st.download_button(
+                label="Download Review as PDF",
+                data=pdf_data,
+                file_name="quiz_review.pdf",
+                mime="application/pdf"
+            )
+            if st.button("Reset and Start Again"):
+                for key in [
+                    "topics_submitted",
+                    "selected_topics",
+                    "selected_topics_final",
+                    "num_questions_final",
+                    "generated_questions",
+                    "question_index",
+                    "submitted",
+                    "user_answers",
+                    "show_score",
+                    "review_md"
+                ]:
+                    if key in st.session_state:
+                        del st.session_state[key]
+                st.rerun()
         
 
 page_names_to_funcs = {
     "Main menu": intro,
     "Linear Algebra chat": chat,
-    "Practise SLE": sle_practise,
+    "Practise T/F questions": practice_true_false_questions,
 }
 
 demo_name = st.sidebar.selectbox("Select a practice mode:", page_names_to_funcs.keys())
