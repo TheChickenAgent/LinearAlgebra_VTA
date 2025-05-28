@@ -70,7 +70,7 @@ def stream_string_data(text: str):
         yield word + " "
         time.sleep(0.02)
 
-def chat():
+def chat(help_TF_Q: dict|None = None):
     st.title("Open QA chat")
 
     llm = OpenAI(api_key=OPENAI_API)
@@ -89,6 +89,72 @@ def chat():
         else:
             with st.chat_message(message["role"]):
                 st.markdown(message["content"])
+
+    # If this method is called through the TF questions page, we want make a query
+    # to help the user understand the question and answer better.
+    if isinstance(help_TF_Q, dict):
+        question = help_TF_Q.get("question", "")
+        explanation = help_TF_Q.get("explanation", "")
+        answer = help_TF_Q.get("answer", "")
+        if question=="" or explanation=="" or answer=="":
+            st.error("Error: The question, explanation, or answer is missing.")
+        else:
+            query = f"Can you help me understand the question with answer and explanation better?"
+            st.session_state.messages.append({"role": "user", "content": query})
+            with st.chat_message("user"):
+                st.markdown(query)
+            #print(query)
+
+            # Retrieve relevant context from the vector database
+            retrieved_docs = db_openai.similarity_search(query, k=4)
+            context = "\n\n".join(doc.page_content for doc in retrieved_docs)
+            references = get_page_numbers([doc.metadata['page'] for doc in retrieved_docs])
+            print(references)
+
+            # Build custom prompt
+            # Combine message history with the custom prompt as system message
+            custom_prompt = (
+                "You are an assistant for question-answering tasks in linear algebra. "
+                "The user would like to get clarification on a True/False question. "
+                "The question is: " + question + ". "
+                "The explanation is: " + explanation + ". "
+                "The answer is: " + str(answer) + ". "
+                "Use the following pieces of retrieved context to aid the explanation. "
+                "Please use LaTeX formatting for mathematical expressions by writing them between dollar signs."
+                "For example, to write a matrix, use $\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}$. "
+                "If you don't know the answer, say that you don't know. "
+                "\n\nContext:\n" + context
+            )
+            help_TF_Q = None  # Reset the help_TF_Q to avoid re-querying
+
+            # Prepare messages: system prompt + previous messages + latest user query
+            messages = [{"role": "system", "content": custom_prompt}]
+            messages += [{"role": m["role"], "content": m["content"]} for m in st.session_state.messages if m["role"] != "references"]
+            # Overwrite the last user message to ensure it includes the context
+            if messages and messages[-1]["role"] == "user":
+                messages[-1]["content"] = query
+
+
+            #with st.chat_message("assistant"):
+            stream = llm.chat.completions.create(
+                model=st.session_state["openai_model"],
+                messages=messages,
+                stream=False,
+            )
+            response = stream.choices[0].message.content
+
+            with st.chat_message("assistant"):
+                response = st.write_stream(stream_string_data(response))
+            st.session_state.messages.append({"role": "assistant", "content": response})
+            if references:
+                with st.chat_message("references", avatar="📖"):
+                    if len(references) == 1:
+                        ref = f"Reference: page {references[0]}"
+                    else:
+                        ref = f"References: pages {", ".join(references[:-1])}, and {references[-1]}"
+                    st.write(ref)
+                #st.session_state.messages.append({"role": "assistant", "content": response})
+                st.session_state.messages.append({"role": "references", "content": ref})
 
     if query := st.chat_input("Ask a question about linear algebra."):
         st.session_state.messages.append({"role": "user", "content": query})
@@ -373,16 +439,39 @@ def practice_true_false_questions():
         st.write("### Answer the following questions:")
         for idx, question_data in enumerate(st.session_state.generated_questions):
             st.write(f"**Question {idx + 1}:** {question_data['question']}")
-            col1, col2 = st.columns(2)
+            col1, col2, col3 = st.columns([1, 1, 1])
+            help_key = f"help_active_{idx}"
             with col1:
                 if st.button(f"True", key=f"true_btn_{idx}", disabled=st.session_state.submitted[idx]):
-                    st.session_state.user_answers[idx] = True
-                    st.session_state.submitted[idx] = True
+                    user_answers = st.session_state.user_answers
+                    user_answers[idx] = True
+                    st.session_state.user_answers = user_answers
+                    submitted = st.session_state.submitted
+                    submitted[idx] = True
+                    st.session_state.submitted = submitted
+                    # Reset help state for this question
+                    st.session_state[help_key] = False
             with col2:
                 if st.button(f"False", key=f"false_btn_{idx}", disabled=st.session_state.submitted[idx]):
-                    st.session_state.user_answers[idx] = False
-                    st.session_state.submitted[idx] = True
-
+                    user_answers = st.session_state.user_answers
+                    user_answers[idx] = False
+                    st.session_state.user_answers = user_answers
+                    submitted = st.session_state.submitted
+                    submitted[idx] = True
+                    st.session_state.submitted = submitted
+                    # Reset help state for this question
+                    st.session_state[help_key] = False
+            # Use a session state key to track which help button was pressed
+            with col3:
+                if st.button("Help", key=f"help_btn_{idx}"):
+                    # Set the help key for this question to True, others to False
+                    for i in range(len(st.session_state.generated_questions)):
+                        st.session_state[f"help_active_{i}"] = (i == idx)
+            # Show chat across all columns if help is active for this question
+            if st.session_state.get(help_key, False) and not st.session_state.submitted[idx]:
+                st.markdown("---")
+                chat(question_data)
+                st.markdown("---")
             # Show feedback if answered
             if st.session_state.submitted[idx]:
                 correct_answer = question_data['answer']
