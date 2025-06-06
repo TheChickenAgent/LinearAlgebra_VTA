@@ -15,6 +15,7 @@ dependencies = [
     "fpdf (>=1.7.2,<2.0.0)",
     "langchain-chroma (>=0.2.3,<0.3.0)",
     "protobuf (==3.20.*)",
+    "matplotlib (>=3.10.3,<4.0.0)",
 ]
 
 
