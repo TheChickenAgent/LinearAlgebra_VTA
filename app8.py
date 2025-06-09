@@ -4,6 +4,7 @@ import streamlit as st
 import os
 from dotenv import load_dotenv
 from openai import OpenAI
+from openai.types.responses.response_output_message import ResponseOutputMessage
 from google import genai
 import io
 from fpdf import FPDF
@@ -11,6 +12,7 @@ from langchain_openai import OpenAIEmbeddings
 from langchain_chroma import Chroma
 import time
 from google.genai import types
+import re
 
 
 # Load environment variables from a .env file
@@ -177,9 +179,9 @@ def chat_TF_generation(help_TF_Q: dict, idx: int):
             #st.session_state.messages.append({"role": "assistant", "content": response})
             st.session_state[f"messages_{idx}"].append({"role": "references", "content": ref})
 
-def chat():
+def chat1():
     st.title("QA chat for Linear Algebra")
-    st.markdown("This chat interface allows you to ask questions about linear algebra.")
+    st.markdown("This chat interface allows you to ask open questions about Linear Algebra.")
 
     llm = OpenAI(api_key=OPENAI_API)
     genai_client = genai.Client(api_key=GOOGLE_API)
@@ -200,7 +202,7 @@ def chat():
             with st.chat_message(message["role"]):
                 st.markdown(message["content"])
 
-    if query := st.chat_input("Ask a question about linear algebra."):
+    if query := st.chat_input("Ask a question about Linear Algebra."):
         st.session_state.messages_chat.append({"role": "user", "content": query})
         with st.chat_message("user"):
             st.markdown(query)
@@ -256,6 +258,168 @@ def chat():
             st.session_state.messages_chat.append({"role": "references", "content": ref})
         print(st.session_state.messages_chat)
 
+def chat():
+    st.title("QA chat for Linear Algebra")
+    st.markdown("This chat interface allows you to ask open questions about Linear Algebra. It is based on **TWO** LLMs to enhance learning.")
+    #st.markdown("For a matrix $A = \\begin{pmatrix}a_{11} & a_{12} \\\\ a_{21} & a_{22}\\end{pmatrix}$")
+    #st.markdown(" $\\det(A) = a_{11}a_{22} -a_{12}a_{21}.$ ")
+
+    llm = OpenAI(api_key=OPENAI_API)
+    genai_client = genai.Client(api_key=GOOGLE_API)
+
+    if "openai_model" not in st.session_state:
+        st.session_state["openai_model"] = "o4-mini"
+    if "gemini_model" not in st.session_state:
+        st.session_state["gemini_model"] = "learnlm-2.0-flash-experimental"
+
+    if "messages_chat" not in st.session_state:
+        st.session_state.messages_chat = []
+
+    for message in st.session_state.messages_chat:
+        if message["role"] == "references":
+            with st.chat_message("references", avatar="📖"):
+                st.markdown(message["content"])
+        else:
+            with st.chat_message(message["role"]):
+                st.markdown(message["content"])
+
+    if query := st.chat_input("Ask a question about Linear Algebra."):
+        st.session_state.messages_chat.append({"role": "user", "content": query})
+        with st.chat_message("user"):
+            st.markdown(query)
+        #print(query)
+
+        # Retrieve relevant context from the vector database
+        retrieved_docs = db_openai.similarity_search(query, k=4)
+        context = "\n\n".join(doc.page_content for doc in retrieved_docs)
+        references = get_page_numbers([doc.metadata['page'] for doc in retrieved_docs])
+        print(references)
+
+        # Build custom prompt
+        # Combine message history with the custom prompt as system message
+        custom_prompt = (
+            "You are an assistant for question-answering tasks in linear algebra. "
+            "If the question is not related to linear algebra, politely decline to answer it and put at the end of the repsonse REFUSED=TRUE. "
+            "Please use LaTeX formatting for mathematical expressions by writing them between dollar signs."
+            "For example, to write a matrix, use $\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}$. "
+            "If you don't know the answer, say 'I don't know'. "
+            "Use the following pieces of retrieved context to answer the question. "
+            "\n\nContext:\n" + context
+        )
+
+
+        # Prepare messages: system prompt + previous messages + latest user query
+        messages = [{"role": "system", "content": custom_prompt}]
+        messages += [{"role": m["role"], "content": m["content"]} for m in st.session_state.messages_chat if m["role"] != "references"]
+        # Overwrite the last user message to ensure it includes the context
+        if messages and messages[-1]["role"] == "user":
+            messages[-1]["content"] = query
+
+
+        #with st.chat_message("assistant"):
+        stream = llm.chat.completions.create(
+            model=st.session_state["openai_model"],
+            messages=messages,
+            stream=False,
+        )
+        response = stream.choices[0].message.content
+        # Check if the response contains REFUSED=TRUE
+        if "REFUSED=TRUE" in response:
+            response = response.replace("REFUSED=TRUE", "")
+            references = None  # No references to show if refused
+            with st.chat_message("assistant"):
+                response = st.write_stream(stream_string_data(response))
+            st.session_state.messages_chat.append({"role": "assistant", "content": response})
+        else:
+            if "refused=false" in response.lower():
+                response = response.replace("REFUSED=FALSE", "")
+                response = response.replace("refused=false", "")
+            if "refused = false" in response.lower():
+                response = response.replace("REFUSED = FALSE", "")
+                response = response.replace("refused = false", "")
+            custom_prompt_LearnLM = (
+                "You are an assistant for question-answering tasks in linear algebra. "
+                "Please use LaTeX formatting for mathematical expressions by writing them between dollar signs."
+                "For example, to write a matrix, use $\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}$. "
+                "If you don't know the answer, say 'I don't know'. "
+                "Another LLM has already answered the question, and you need to explain the answer to the user. "
+                "Question: " + query + ".\n\n"
+                "Answer from other LLM: " + response + ". "
+            )
+            # Use the Google Gemini API to generate a response
+            chat = genai_client.chats.create(
+                model=st.session_state["gemini_model"],
+                config=types.GenerateContentConfig(system_instruction=custom_prompt_LearnLM, tools=[types.Tool(code_execution=types.ToolCodeExecution)]),                
+            )
+            #chat.send_message(f"Answer from other LLM to the question: {response}")
+            response_LearnLM = chat.send_message(query).text
+            response_LearnLM = transform_latex_text(str(response_LearnLM))
+            with st.chat_message("assistant"):
+                response_LearnLM = st.write_stream(stream_string_data(response_LearnLM))
+            st.session_state.messages_chat.append({"role": "assistant", "content": response_LearnLM})
+            if references:
+                with st.chat_message("references", avatar="📖"):
+                    if len(references) == 1:
+                        ref = f"Reference: page {references[0]}"
+                    else:
+                        ref = f"References: pages {", ".join(references[:-1])}, and {references[-1]}"
+                    st.write(ref)
+                st.session_state.messages_chat.append({"role": "references", "content": ref})
+        #print(st.session_state.messages_chat)
+
+def transform_latex_text(text):
+    # Replace display math block with inline math (square brackets to dollar signs)
+    text = re.sub(r"\[\s*(.*?)\s*\]", r'$\1$', text, flags=re.DOTALL)
+
+    # Replace LaTeX alignment characters
+    text = text.replace(r"\[6pt]", r"\\\\")  # Replace spacing with newline
+    text = text.replace(";", "")  # Remove spacing semicolons
+
+    # Ensure escaped backslashes are doubled (for inline math inside string)
+    #text = text.replace(r'\begin{pmatrix}', r'\\begin{pmatrix}')
+    #text = text.replace(r'\end{pmatrix}', r'\\end{pmatrix}')
+    #text = text.replace(r'\\', r'\\\\')
+
+    return text
+
+def convert_to_markdown_math(input_str):
+    """
+    Converts mathematical expressions in square brackets [...] into Markdown math format using $...$.
+    Supports inline math only.
+    
+    Args:
+        input_str (str): The input string with math expressions in [ ... ] format.
+        
+    Returns:
+        str: Markdown-formatted string with math in $...$.
+    """
+    # Replace square brackets [ ... ] with $...$
+    markdown_str = re.sub(r'\[\s*(.*?)\s*\]', r'$\1$', input_str, flags=re.DOTALL)
+    
+    # Optionally clean up common LaTeX errors or escape sequences
+    markdown_str = markdown_str.replace('\\[6pt]', '\\\\[6pt]')  # fix spacing issue in matrix
+
+    return markdown_str
+
+def latexify_math(text: str) -> str:
+    # Replace [ ... ] with $ ... $ for inline math, handling newlines and spaces
+    def replacer(match):
+        content = match.group(1).strip()
+        # Replace \[6pt] with \\ for LaTeX new line
+        content = re.sub(r"\\\[6pt\]", r"\\\\", content)
+        content = re.sub(r"\[6pt\]", r"\\\\", content)
+        # Replace ;=; with =
+        content = content.replace(";=;", "=")
+        # Replace ;-; with -
+        content = content.replace(";-;", "-")
+        # Remove leading/trailing newlines and spaces
+        content = re.sub(r'^\s+|\s+$', '', content)
+        return f"${content}$"
+
+    # Replace all [ ... ] with $ ... $
+    text = re.sub(r"\[(.*?)\]", replacer, text, flags=re.DOTALL)
+    return text
+
 def generate_questions():
     
     # List of True/False questions with answers
@@ -274,6 +438,19 @@ def generate_questions():
         }
     ]
     return questions
+
+
+def extract_llm_response_code_interpreter(response: list) -> str:
+    output = ""
+    #print(response)
+    #print(len(response))
+    for index in range(len(response)-1, -1, -1):
+        if isinstance(response[index], ResponseOutputMessage):
+            #print(len(response[out].content)) check if this length is 1
+            #print(f"Output {index}:\n{response[index].content[0].text}")
+            output = response[index].content[0].text
+            break #stop after the answer is found
+    return output
 
 def practice_true_false_questions():
     questions = generate_questions()
@@ -412,21 +589,42 @@ def practice_true_false_questions():
                 "A: False\n"
                 "Please use LaTeX formatting for mathematical expressions by writing them between dollar signs."
                 "For example, to write a matrix, use $\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}$. "
+                "You can write and run code to answer the question. "
                 "\n\nSelected topics:\n" + topics_str
             )
             llm = OpenAI(api_key=OPENAI_API)
 
             if "openai_model" not in st.session_state:
-                st.session_state["openai_model"] = "gpt-3.5-turbo"
+                st.session_state["openai_model"] = "o4-mini"
+            if "container_id" not in st.session_state:
+                print("Creating container for Code Interpreter...")
+                cont = llm.containers.create(name="test")
+                container_id_manual = cont.id
+                st.session_state["container_id"] = container_id_manual
+
+            try:
+                response = llm.responses.create(
+                    model=st.session_state["openai_model"],
+                    tools=[{"type": "code_interpreter", "container": st.session_state["container_id"]}],
+                    input=custom_prompt,
+                )
+                # Extract the answer from the response
+                answer = extract_llm_response_code_interpreter(response.output)
+                if answer == "":
+                    raise ValueError("Empty answer received from LLM.")
+            except Exception as e:
+                print(f"Error generating questions.\nError: {e}")
+                st.error(f"Error generating questions.\nError: {e}")
 
             # Use the correct message format for OpenAI
-            response = llm.chat.completions.create(
-                model=st.session_state["openai_model"],
-                messages= [{"role": "system","content": custom_prompt}],
-                stream=False,
-            )
-            response_content = response.choices[0].message.content
+            #response = llm.chat.completions.create(
+            #    model=st.session_state["openai_model"],
+            #    messages= [{"role": "system","content": custom_prompt}],
+            #    stream=False,
+            #)
+            #response_content = response.choices[0].message.content
             # Process the response to extract questions and answers
+            response_content = answer
             questions = []
             explanations = []
             answers = []
@@ -503,11 +701,6 @@ def practice_true_false_questions():
                 correct_answer = question_data['answer']
                 explanation = question_data['explanation']
                 user_answer = st.session_state.user_answers[idx]
-                #if "messages" in st.session_state: # delete chat messages from previous question (because they are not relevant anymore)
-                #    print("Deleted messages")
-                #    del st.session_state["messages"]
-                #if "chat" in st.session_state: # delete chat messages from previous question (because they are not relevant anymore)
-                #    del st.session_state["chat"]
                 if user_answer == correct_answer:
                     st.success(f"Question {idx + 1}: Correct! 🎉\n\nExplanation: {explanation}")
                 else:
@@ -550,7 +743,7 @@ def practice_true_false_questions():
                         del st.session_state[f"messages_{idx}"]
                     if f"init_chat_TF_{idx}" in st.session_state:
                         del st.session_state[f"init_chat_TF_{idx}"]
-                    if st.session_state[f"chat_{idx}"] in st.session_state:
+                    if f"chat_{idx}" in st.session_state:
                         del st.session_state[f"chat_{idx}"]
                 if "generated_questions" in st.session_state:
                     del st.session_state["generated_questions"]
