@@ -1,6 +1,6 @@
-# streamlit run app8.py
+# streamlit run app8A.py
 # Version review:
-# - Open QA chat: o4-mini and LearnLM
+# - Open QA chat: LearnLM
 # - True/False questions: o4-mini (only generation) and LearnLM (as help chat)
 
 import streamlit as st
@@ -16,6 +16,9 @@ from langchain_chroma import Chroma
 import time
 from google.genai import types
 import re
+import pickle
+from datetime import datetime
+
 
 
 # Load environment variables from a .env file
@@ -24,6 +27,9 @@ OPENAI_API = os.getenv('OPENAI_API_KEY')
 GOOGLE_API = os.getenv('GOOGLE_API_KEY')
 embedding = OpenAIEmbeddings(model="text-embedding-3-large", openai_api_key=OPENAI_API)
 db_openai = Chroma(persist_directory="./vectordb/openai_vectorDB/", embedding_function=embedding) #for existing database
+MODEL_QUESTION_GENERATION = "o4-mini"  # Model for question generation
+#MODEL_QUESTION_GENERATION = "gpt-3.5-turbo"  # Model for question generation
+
 
 def get_page_numbers(page_numbers: list[str]) -> list[str]:
     """
@@ -107,17 +113,13 @@ def chat_TF_generation(help_TF_Q: dict, idx: int):
     question = help_TF_Q.get("question", "")
     explanation = help_TF_Q.get("explanation", "")
     answer = help_TF_Q.get("answer", "")
-    query = None
+    #query = None
 
     if question=="" or explanation=="" or answer=="":
         st.error("Error: The question, explanation, or answer is missing.")
     elif st.session_state[f"init_chat_TF_{idx}"] == True:
         st.session_state[f"init_chat_TF_{idx}"] = False
-    #elif start == True and "chat" not in st.session_state:
         print("Starting")
-        #st.session_state.init_chat_TF = False
-        #if "messages" in st.session_state:
-        #    st.session_state.messages = []
         # Build custom prompt
         custom_prompt = (
             "You are an assistant for question-answering tasks in linear algebra. "
@@ -144,7 +146,6 @@ def chat_TF_generation(help_TF_Q: dict, idx: int):
         with st.chat_message("user"):
             st.markdown(query)
         
-
         # Retrieve relevant context from the vector database
         query_rag = f"Question: {question}\nExplanation: {explanation}\nAnswer: {answer}" 
         retrieved_docs = db_openai.similarity_search(query_rag, k=4)
@@ -154,19 +155,13 @@ def chat_TF_generation(help_TF_Q: dict, idx: int):
 
         total_query = f"Use the following pieces of retrieved context to aid the explanation: {context}\n\nUser query: {query}"
 
-
-        # Prepare messages: system prompt + previous messages + latest user query
-        #messages = [{"role": "system", "content": custom_prompt}]
-        #messages += [{"role": m["role"], "content": m["content"]} for m in st.session_state.messages if m["role"] != "references"]
-        # Overwrite the last user message to ensure it includes the context
-        #if messages and messages[-1]["role"] == "user":
-        #    messages[-1]["content"] = query
-
         try:
             response = st.session_state[f"chat_{idx}"].send_message(total_query)
             answer = response.text
         except Exception as e:
             st.error(f"Error processing chat clarification question.\nError: {e}")
+
+        answer = transform_latex_text(str(answer))
 
         with st.chat_message("assistant"):
             answer = st.write_stream(stream_string_data(str(answer)))
@@ -182,93 +177,12 @@ def chat_TF_generation(help_TF_Q: dict, idx: int):
             #st.session_state.messages.append({"role": "assistant", "content": response})
             st.session_state[f"messages_{idx}"].append({"role": "references", "content": ref})
 
-def chat1():
-    st.title("QA chat for Linear Algebra")
-    st.markdown("This chat interface allows you to ask open questions about Linear Algebra.")
-
-    llm = OpenAI(api_key=OPENAI_API)
-
-    if "openai_model" not in st.session_state:
-        st.session_state["openai_model"] = "o4-mini"
-
-    if "messages_chat" not in st.session_state:
-        st.session_state.messages_chat = []
-
-    for message in st.session_state.messages_chat:
-        if message["role"] == "references":
-            with st.chat_message("references", avatar="📖"):
-                st.markdown(message["content"])
-        else:
-            with st.chat_message(message["role"]):
-                st.markdown(message["content"])
-
-    if query := st.chat_input("Ask a question about Linear Algebra."):
-        st.session_state.messages_chat.append({"role": "user", "content": query})
-        with st.chat_message("user"):
-            st.markdown(query)
-        #print(query)
-
-        # Retrieve relevant context from the vector database
-        retrieved_docs = db_openai.similarity_search(query, k=4)
-        context = "\n\n".join(doc.page_content for doc in retrieved_docs)
-        references = get_page_numbers([doc.metadata['page'] for doc in retrieved_docs])
-        print(references)
-
-        # Build custom prompt
-        # Combine message history with the custom prompt as system message
-        custom_prompt = (
-            "You are an assistant for question-answering tasks in linear algebra. "
-            "If the question is not related to linear algebra, politely decline to answer it and put at the end of the repsonse REFUSED=TRUE. "
-            "Please use LaTeX formatting for mathematical expressions by writing them between dollar signs."
-            "For example, to write a matrix, use $\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}$. "
-            "If you don't know the answer, say 'I don't know'. "
-            "Use the following pieces of retrieved context to answer the question. "
-            "\n\nContext:\n" + context
-        )
-
-        # Prepare messages: system prompt + previous messages + latest user query
-        messages = [{"role": "system", "content": custom_prompt}]
-        messages += [{"role": m["role"], "content": m["content"]} for m in st.session_state.messages_chat if m["role"] != "references"]
-        # Overwrite the last user message to ensure it includes the context
-        if messages and messages[-1]["role"] == "user":
-            messages[-1]["content"] = query
-
-
-        #with st.chat_message("assistant"):
-        stream = llm.chat.completions.create(
-            model=st.session_state["openai_model"],
-            messages=messages,
-            stream=False,
-        )
-        response = stream.choices[0].message.content
-        # Check if the response contains REFUSED=TRUE
-        if "REFUSED=TRUE" in response:
-            response = response.replace("REFUSED=TRUE", "")
-            references = None  # No references to show if refused
-        with st.chat_message("assistant"):
-            response = st.write_stream(stream_string_data(response))
-        st.session_state.messages_chat.append({"role": "assistant", "content": response})
-        if references:
-            with st.chat_message("references", avatar="📖"):
-                if len(references) == 1:
-                    ref = f"Reference: page {references[0]}"
-                else:
-                    ref = f"References: pages {", ".join(references[:-1])}, and {references[-1]}"
-                st.write(ref)
-            st.session_state.messages_chat.append({"role": "references", "content": ref})
-        print(st.session_state.messages_chat)
-
 def chat():
     st.title("QA chat for Linear Algebra")
-    st.markdown("This chat interface allows you to ask open questions about Linear Algebra. It is based on **TWO** LLMs to enhance learning.")
-    #st.markdown("For a matrix $A = \\begin{pmatrix}a_{11} & a_{12} \\\\ a_{21} & a_{22}\\end{pmatrix}$")
-    #st.markdown(" $\\det(A) = a_{11}a_{22} -a_{12}a_{21}.$ ")
+    st.markdown("This chat interface allows you to ask open questions about Linear Algebra. Type 'clear' to reset the chat history.")
 
-    llm = OpenAI(api_key=OPENAI_API)
     genai_client = genai.Client(api_key=GOOGLE_API)
 
-    if "openai_model" not in st.session_state:
-        st.session_state["openai_model"] = "o4-mini"
     if "gemini_model" not in st.session_state:
         st.session_state["gemini_model"] = "learnlm-2.0-flash-experimental"
 
@@ -284,78 +198,76 @@ def chat():
                 st.markdown(message["content"])
 
     if query := st.chat_input("Ask a question about Linear Algebra."):
-        st.session_state.messages_chat.append({"role": "user", "content": query})
-        with st.chat_message("user"):
-            st.markdown(query)
-        #print(query)
-
-        # Retrieve relevant context from the vector database
-        retrieved_docs = db_openai.similarity_search(query, k=4)
-        context = "\n\n".join(doc.page_content for doc in retrieved_docs)
-        references = get_page_numbers([doc.metadata['page'] for doc in retrieved_docs])
-        print(references)
-
-        # Build custom prompt
-        # Combine message history with the custom prompt as system message
-        custom_prompt = (
-            "You are an assistant for question-answering tasks in linear algebra. "
-            "If the question is not related to linear algebra, politely decline to answer it and put at the end of the repsonse REFUSED=TRUE. "
-            "Please use LaTeX formatting for mathematical expressions by writing them between dollar signs."
-            "For example, to write a matrix, use $\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}$. "
-            "If you don't know the answer, say 'I don't know'. "
-            "Use the following pieces of retrieved context to answer the question. "
-            "\n\nContext:\n" + context
-        )
-
-
-        # Prepare messages: system prompt + previous messages + latest user query
-        messages = [{"role": "system", "content": custom_prompt}]
-        messages += [{"role": m["role"], "content": m["content"]} for m in st.session_state.messages_chat if m["role"] != "references"]
-        # Overwrite the last user message to ensure it includes the context
-        if messages and messages[-1]["role"] == "user":
-            messages[-1]["content"] = query
-
-
-        #with st.chat_message("assistant"):
-        stream = llm.chat.completions.create(
-            model=st.session_state["openai_model"],
-            messages=messages,
-            stream=False,
-        )
-        response = stream.choices[0].message.content
-        # Check if the response contains REFUSED=TRUE
-        if "REFUSED=TRUE" in response:
-            response = response.replace("REFUSED=TRUE", "")
-            references = None  # No references to show if refused
-            with st.chat_message("assistant"):
-                response = st.write_stream(stream_string_data(response))
-            st.session_state.messages_chat.append({"role": "assistant", "content": response})
+        if "clear" == query.lower():  
+            #print(st.session_state.messages_chat)
+            safe_time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+            with open(f'chats/Open_chat_A_list_{safe_time}.pkl', 'wb') as f:
+                pickle.dump(st.session_state.messages_chat, f)
+            st.session_state.messages_chat = []
+            if "open_chat" in st.session_state:
+                del st.session_state["open_chat"]
+            st.rerun()
         else:
-            if "refused=false" in response.lower():
-                response = response.replace("REFUSED=FALSE", "")
-                response = response.replace("refused=false", "")
-            if "refused = false" in response.lower():
-                response = response.replace("REFUSED = FALSE", "")
-                response = response.replace("refused = false", "")
-            custom_prompt_LearnLM = (
+            st.session_state.messages_chat.append({"role": "user", "content": query})
+            with st.chat_message("user"):
+                st.markdown(query)
+            #print(query)
+
+            # Retrieve relevant context from the vector database
+            retrieved_docs = db_openai.similarity_search(query, k=4)
+            context = "\n\n".join(doc.page_content for doc in retrieved_docs)
+            references = get_page_numbers([doc.metadata['page'] for doc in retrieved_docs])
+            print(references)
+
+            # Build custom prompt
+            # Combine message history with the custom prompt as system message
+            custom_prompt = (
                 "You are an assistant for question-answering tasks in linear algebra. "
+                "If the question is not related to linear algebra, politely decline to answer it and put at the end of the repsonse REFUSED=TRUE. "
                 "Please use LaTeX formatting for mathematical expressions by writing them between dollar signs."
                 "For example, to write a matrix, use $\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}$. "
                 "If you don't know the answer, say 'I don't know'. "
-                "Another LLM has already answered the question, and you need to explain the answer to the user. "
-                "Question: " + query + ".\n\n"
-                "Answer from other LLM: " + response + ". "
+                "You can write and run code to answer the question. "
+                "Use the following pieces of retrieved context to answer the question. "
+                "\n\nContext:\n" + context
             )
+
+
+            # Prepare messages: system prompt + previous messages + latest user query
+            messages = [{"role": "system", "content": custom_prompt}]
+            messages += [{"role": m["role"], "content": m["content"]} for m in st.session_state.messages_chat if m["role"] != "references"]
+            # Overwrite the last user message to ensure it includes the context
+            if messages and messages[-1]["role"] == "user":
+                messages[-1]["content"] = query
+
             # Use the Google Gemini API to generate a response
-            chat = genai_client.chats.create(
-                model=st.session_state["gemini_model"],
-                config=types.GenerateContentConfig(system_instruction=custom_prompt_LearnLM, tools=[types.Tool(code_execution=types.ToolCodeExecution)]),                
-            )
-            #chat.send_message(f"Answer from other LLM to the question: {response}")
-            response_LearnLM = chat.send_message(query).text
-            response_LearnLM = transform_latex_text(str(response_LearnLM))
+            if "open_chat" not in st.session_state:
+                chat = genai_client.chats.create(
+                    model=st.session_state["gemini_model"],
+                    config=types.GenerateContentConfig(system_instruction=custom_prompt, tools=[types.Tool(code_execution=types.ToolCodeExecution)]),                
+                )
+                st.session_state["open_chat"] = chat
+            
+            try:
+                response = st.session_state["open_chat"].send_message(query)
+                response_LearnLM = response.text
+            except Exception as e:
+                st.error(f"Error processing chat clarification question.\nError: {e}")
+            response = transform_latex_text(str(response_LearnLM))
+
+            # Check if the response contains REFUSED=TRUE
+            if "REFUSED=TRUE" in response:
+                response = response.replace("REFUSED=TRUE", "")
+                references = None  # No references to show if refused
+            else:
+                if "refused=false" in response.lower():
+                    response = response.replace("REFUSED=FALSE", "")
+                    response = response.replace("refused=false", "")
+                if "refused = false" in response.lower():
+                    response = response.replace("REFUSED = FALSE", "")
+                    response = response.replace("refused = false", "") 
             with st.chat_message("assistant"):
-                response_LearnLM = st.write_stream(stream_string_data(response_LearnLM))
+                response_LearnLM = st.write_stream(stream_string_data(response))
             st.session_state.messages_chat.append({"role": "assistant", "content": response_LearnLM})
             if references:
                 with st.chat_message("references", avatar="📖"):
@@ -365,7 +277,7 @@ def chat():
                         ref = f"References: pages {", ".join(references[:-1])}, and {references[-1]}"
                     st.write(ref)
                 st.session_state.messages_chat.append({"role": "references", "content": ref})
-        #print(st.session_state.messages_chat)
+            #print(st.session_state.messages_chat)
 
 def transform_latex_text(text):
     # Replace display math block with inline math (square brackets to dollar signs)
@@ -382,42 +294,19 @@ def transform_latex_text(text):
 
     return text
 
-def convert_to_markdown_math(input_str):
-    """
-    Converts mathematical expressions in square brackets [...] into Markdown math format using $...$.
-    Supports inline math only.
-    
-    Args:
-        input_str (str): The input string with math expressions in [ ... ] format.
-        
-    Returns:
-        str: Markdown-formatted string with math in $...$.
-    """
-    # Replace square brackets [ ... ] with $...$
-    markdown_str = re.sub(r'\[\s*(.*?)\s*\]', r'$\1$', input_str, flags=re.DOTALL)
-    
-    # Optionally clean up common LaTeX errors or escape sequences
-    markdown_str = markdown_str.replace('\\[6pt]', '\\\\[6pt]')  # fix spacing issue in matrix
+def transform_latex_text2(text):
+    # Replace display math block with inline math (square brackets to dollar signs)
+    text = re.sub(r"\(\s*(.*?)\s*\)", r'$\1$', text, flags=re.DOTALL)
 
-    return markdown_str
+    # Replace LaTeX alignment characters
+    text = text.replace(r"\[6pt]", r"\\\\")  # Replace spacing with newline
+    text = text.replace(";", "")  # Remove spacing semicolons
 
-def latexify_math(text: str) -> str:
-    # Replace [ ... ] with $ ... $ for inline math, handling newlines and spaces
-    def replacer(match):
-        content = match.group(1).strip()
-        # Replace \[6pt] with \\ for LaTeX new line
-        content = re.sub(r"\\\[6pt\]", r"\\\\", content)
-        content = re.sub(r"\[6pt\]", r"\\\\", content)
-        # Replace ;=; with =
-        content = content.replace(";=;", "=")
-        # Replace ;-; with -
-        content = content.replace(";-;", "-")
-        # Remove leading/trailing newlines and spaces
-        content = re.sub(r'^\s+|\s+$', '', content)
-        return f"${content}$"
+    # Ensure escaped backslashes are doubled (for inline math inside string)
+    #text = text.replace(r'\begin{pmatrix}', r'\\begin{pmatrix}')
+    #text = text.replace(r'\end{pmatrix}', r'\\end{pmatrix}')
+    #text = text.replace(r'\\', r'\\\\')
 
-    # Replace all [ ... ] with $ ... $
-    text = re.sub(r"\[(.*?)\]", replacer, text, flags=re.DOTALL)
     return text
 
 def generate_questions():
@@ -595,7 +484,7 @@ def practice_true_false_questions():
             llm = OpenAI(api_key=OPENAI_API)
 
             if "openai_model" not in st.session_state:
-                st.session_state["openai_model"] = "o4-mini"
+                st.session_state["openai_model"] = MODEL_QUESTION_GENERATION
             if "container_id" not in st.session_state:
                 print("Creating container for Code Interpreter...")
                 cont = llm.containers.create(name="test")
@@ -633,15 +522,17 @@ def practice_true_false_questions():
                 if line.startswith("Q:"):
                     question = line[2:].strip()
                     questions.append(question)
+                    #questions.append(transform_latex_text2(question))
                 elif line.startswith("E:"):
                     explanation = line[2:].strip()
                     explanations.append(explanation)
+                    #explanations.append(transform_latex_text2(explanation))
                 elif line.startswith("A:"):
                     answer = line[2:].strip().lower() == "true"
                     answers.append(answer)
             if len(questions) != len(answers) or len(questions) != st.session_state.num_questions_final:	
                 st.error("Error: The number of questions and answers do not match the requested number.")
-            time.sleep(1)  # Simulate processing time
+            time.sleep(1) # Simulate processing time
             # Store generated questions and answers in session state
             st.session_state.generated_questions = [
                 {"question": q, "explanation": e, "answer": a} for q, e, a in zip(questions, explanations, answers)
@@ -662,6 +553,7 @@ def practice_true_false_questions():
         )
         st.write("### Answer the following questions:")
         for idx, question_data in enumerate(st.session_state.generated_questions):
+            #st.markdown(f"**Question {idx + 1}:** {question_data['question']}")
             st.write(f"**Question {idx + 1}:** {question_data['question']}")
             col1, col2, col3 = st.columns([1, 1, 1])
             help_key = f"help_active_{idx}"
@@ -740,6 +632,9 @@ def practice_true_false_questions():
 
                 for idx, question_data in enumerate(st.session_state.generated_questions):
                     if f"messages_{idx}" in st.session_state:
+                        safe_time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+                        with open(f'chats/TF_chat_{idx}_list_{safe_time}.pkl', 'wb') as f:
+                            pickle.dump(st.session_state[f"messages_{idx}"], f)
                         del st.session_state[f"messages_{idx}"]
                     if f"init_chat_TF_{idx}" in st.session_state:
                         del st.session_state[f"init_chat_TF_{idx}"]
