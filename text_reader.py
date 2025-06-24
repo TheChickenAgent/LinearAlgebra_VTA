@@ -81,7 +81,7 @@ if selected_file:
     question = question.replace("\\textbf{distinct}", "*distinct*")
 
 
-    st.write(f"### Q{selected_question_number}: {question}")
+    st.write(f"### Q{selected_question_number+1}: {question}")
     #st.write(f"#### {}")
     conversation = data.get("messages", [])
 
