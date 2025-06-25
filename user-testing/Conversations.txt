@@ -1,0 +1,170 @@
+Manual analysis of conversations
+
+SUMMARY:
+- Referring to the explanation: it refers to the explanation that LearnLM is internally represented with, but the student does not see this.
+-- Leaking the answer: saying that the explanation includes a counterexample
++ Effective grounding: frequently asks users to define or explain in their own words.
++ Misconception identification and gives room/guidance on that the student is nearly there but gives hints for next steps.
++ Engaging users with examples and intuitive analogies.
+
+
+ADJUSTMENT IDEAS:
+- Fix LaTeX:
+	- data 2025-06-11 18_05_37.pkl
+	"$\mathbf u=(1,0,0),\quad \mathbf v=(0,1,0),\quad \mathbf w=(1,1,0). $"
+	- data 2025-06-12 17_41_29.pkl
+- Good LaTeX example:
+	- data 2025-06-12 16_24_06.pkl
+- When asked for def., just provide them
+- Adjust prompt to include university style
+- Maybe if answer==True --> give examples directly. If answer==False --> do not give examples because they could be counter examples.
+
+
+Q1:
+data 2025-06-11 16_07_06.pkl
+- Refers to the explanations in the output (which is in the prompt)
+data 2025-06-12 09_49_54.pkl
+- only 2 turns where user asks in 1 turn what lin. dep. is
+data 2025-06-11 18_05_37.pkl
+- Gives away the answer by saying that in the explanation it says that (1) and (2) are lin. ind., but (3) is lin. dep. Student does not notice this.
+data 2025-06-12 10_14_49.pkl
++ Grounds user by asking what it thinks lin. dep. is. User rejects and says does not know, system correctly explains.
++ User gives wrong example, a matrix, but probably means 2 vectors. The vectors are linearly independent, but the system asks the user to justify why they are lin. ind.
+data 2025-06-12 14_50_26.pkl
+- Refers to the explanations in the output (which is in the prompt)
+- Gives answer away as explanation includes counterexample
++ User does not know what linear independence is and system explains it by the user of lin. combinations, but gets a little bit side tracked.
+data 2025-06-12 16_09_28.pkl
+- Refers to the explanations in the output (which is in the prompt)
++ User directly asks for a counterexample as it suspect it is False, then system asks to remind the user of what a lin. ind. set is.
++ User does not know what lin. ind. is, so system provides example
+data 2025-06-12 16_14_24.pkl
++ System explains what lin. ind. is
++ System gives example of lin. dep. set
+data 2025-06-12 16_40_55.pkl
+- Refers to the explanations in the output (which is in the prompt)
+- Gives away the answer by saying that in the explanation it uses a counterexample
+data 2025-06-12 16_52_20.pkl
+- Gives away the answer by saying that in the explanation it uses a counterexample, user does not notice
++ User goes into calculations of linear combinations
+data 2025-06-13 17_25_05.pkl
+- Gives away the answer by saying that in the explanation it uses a counterexample, user does not notice
++ User correctly sees relation in provided example
++ User asks to give an answer, system encourages and gives hint, user gets the hint and goes to correct final step
+
+
+
+Q2:
+data 2025-06-11 16_16_04.pkl
++ Grounds by asking their definition of orthogonal matrices
+- User gives example, but example is wrong. The given example is the 0 matrix, but this is not orthogonal. System correctly identifies this, but only at a later stage. "This final step will solidify your understanding of why a zero matrix cannot be orthogonal."
+data 2025-06-11 16_47_16.pkl:
++ Corrects wrongly calculated matrix multiplication.
+- Deviates a bit from orthogonality, but this is what the user has selected
+data 2025-06-12 10_01_16.pkl
+- Refers to the explanations in the output (which is in the prompt)
++ Gives the steps to the user and explains them in a detailed manner
+data 2025-06-12 13_14_32.pkl
++ Correctly gives a hint to go from orthogonal vectors to matrices
++ Correctly gives a hint to think about the relationship of transpose with orthogonal matrices
++ Also gives a hint that A^T = A^{-1}
+data 2025-06-12 14_47_40.pkl
+- Refers to the explanations in the output (which is in the prompt)
+- Gives answer away as explanation includes that it retains the orthogonality aspect
++ Correctly explains explanation and user understands
+
+
+
+Q3:
+data 2025-06-11 15_07_33.pkl
+- Refers to the explanations in the output (which is in the prompt)
++ Grounds by asking if the user has seen eigenvalue equations
+data 2025-06-11 17_16_15.pkl
++ Grounds to ask in their own words
++ Correct A * x = alpha * x to Ax=λx
+data 2025-06-12 16_53_36.pkl
++ Grounds with the user about understanding of matrices
++ Goes into detail to calculate the determinant, which is crucial, but user does not understand.
+- Eventually gives away the answer in the explanations
+data 2025-06-12 17_47_20.pkl
+- Refers to explanations in the ouptut (which is in the prompt)
++ System helps user to get to A*v=lambda*v
++ Gets along with the user to explain and user understands
+- User does not understand relation between TRANSPOSE and the equation
+
+
+
+Q4:
+data 2025-06-11 15_24_32.pkl
+- Directly asking the answer ("Why is it false?")
+- Refers to the explanations in the output (which is in the prompt)
++ Grounding by asking to explain in own words
++ Can handle direct number questions (i.e. "number 4")
+data 2025-06-12 11_20_43.pkl
+- Refers to the explanations in the output (which is in the prompt)
+- Also says that the explanation has a counterexample --> giving away the answer
+data 2025-06-12 16_24_06.pkl
++ Grounding by asking to explain in own words
++ Asks user to provide example of 2x2 symmetric matrix
++ Asks user for general form, user gives correct answer, then system asks to go back to question, but end of conv.
+
+
+
+Q6:
+data 2025-06-11 15_58_10.pkl
++ Grounding by asking to explain in own words
++ Miscalculates dot product of example given by system. System guides user by asking to think if it's a vector or scalar.
++ User think orthogonality is positive dot product, system responds with "not quite" and it takes a few turns before the user understands that dot product == 0 --> orthogonality
+- System does not mention what a rotation matrix is
+data 2025-06-12 09_53_08.pkl
+- Refers to the explanations in the output (which is in the prompt)
++ Gives example of rotation matrix
++ Tries to correct user's idea of 90 degree increments
+data 2025-06-12 11_22_54.pkl
+- Refers to the explanations in the output (which is in the prompt)
+data 2025-06-12 11_28_28.pkl
+- Refers to the explanations in the output (which is in the prompt)
++ Gives the rotational matrix
++ Refers to the dot product to find if it's orthogonal
++ User gives correct answer of dot product, system then asks to evaluate it fully (i.e. make final step to = 0)
+data 2025-06-12 13_14_56.pkl
+- Mentions that the explanation shows that they are orthognal (giving the answer away)
++ Gives an intuitive example of what orthogonality is (in 2D)
+- User needs to ask twice what is an orthogonal set
+data 2025-06-12 13_31_35.pkl
++ Grounds a user says that it does not know how to do the question
++ Correctly uses the number it has shown
++ Gives example and then asks user to give answer to slightly different example
++ User is confused as it thinks that [1;2] and [2;1] are rotation vectors; Gives further clarification on rotational vectors
+
+
+Q7:
+data 2025-06-11 15_13_52.pkl
+- Directly asking the answer ("Why is it true?")
++ Can handle direct matrix questions (i.e. "b transpose * a * b")
++ Tries to abstract by using (XYZ)^T
+data 2025-06-11 16_35_56.pkl
+- System ask to share question??
+data 2025-06-12 10_14_48.pkl
++ User incorrectly things A = I, system identifies this and correct user
++ User incorrectly things B is symmetrics, which is not given.
+data 2025-06-12 11_41_33.pkl
++ Correctly grounds with user
++ User says that it thinks that B^T * B is symmetric, system asks to think about why
++ Correct guidance on next steps
+data 2025-06-12 17_41_29.pkl
++ User does not know, so system gives example and asks user to give the transpose. User makes mistake, system says that there is a mistake in some position and user corrects it
+- System does give explanation away once the user is nearly there
++ User conclused rightly and system asks to help with other concepts
+data 2025-06-13 17_13_17.pkl
++ User uses weird/slang language, system explain what it think that it means and how it is handled.
+
+
+Q8:
+data 2025-06-12 09_52_33.pkl
+- Refers to the explanations in the output (which is in the prompt)
+- Refers to the counterexample in the explanation
+
+
+
+
