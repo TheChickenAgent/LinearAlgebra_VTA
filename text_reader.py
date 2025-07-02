@@ -3,7 +3,9 @@ import os
 import pickle
 import re
 
+
 DATA_DIR = "user-testing/data/"
+
 
 def list_pickle_files(directory):
     return [f for f in os.listdir(directory) if f.endswith('.pkl')]
@@ -22,11 +24,9 @@ def read_questions_answers():
         tex_content = file.read()
         questions, answers = extract_question_answer(tex_content)
         #print(f"Total Questions: {len(questions)}")
-        #print(f"Total Answers: {len(answers)}")
+        #print(f"Total Answers: {len(answers)}\n")
         if len(questions) != len(answers):
             print("Warning: The number of questions and answers do not match!")
- 
-        #print()
         for idx, (q, a) in enumerate(zip(questions, answers), 1):
             #print(f"Question {idx}:\n{q}\n")
             #print(f"Answer {idx}:\n{a}\n")
@@ -58,10 +58,7 @@ def extract_question_answer(tex_content):
 
 
 
-
-
-
-
+############# STREAMLIT APP #############
 st.title("Conversation Viewer")
 
 files = list_pickle_files(DATA_DIR)
@@ -80,9 +77,7 @@ if selected_file:
     question = question.replace("\\textbf{rotation}", "*rotation*")
     question = question.replace("\\textbf{distinct}", "*distinct*")
 
-
     st.write(f"### Q{selected_question_number+1}: {question}")
-    #st.write(f"#### {}")
     conversation = data.get("messages", [])
 
     st.subheader("Conversation")
@@ -94,9 +89,9 @@ if selected_file:
                 st.markdown(content)
         elif role == "assistant":
             with st.chat_message("assistant"):
+                content = content.replace("\\$", "$")
                 st.markdown(content)
         else:
             with st.chat_message("system"):
                 st.markdown(content)
     st.write("END OF CONVERSATION")
-
