@@ -91,6 +91,9 @@ if selected_file:
             with st.chat_message("assistant"):
                 content = content.replace("\\$", "$")
                 st.markdown(content)
+        elif role =="references":
+            with st.chat_message("references", avatar="📖"):
+                st.markdown(content)
         else:
             with st.chat_message("system"):
                 st.markdown(content)
