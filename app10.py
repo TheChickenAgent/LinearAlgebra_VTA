@@ -994,7 +994,7 @@ def demo():
         if col3.button("Force return", key="return_btn", disabled=st.session_state.get("demo_answer_submitted", False)):
             file = save_conversation(None)
             st.download_button(
-                label="Download conversations",
+                label="Download conversation",
                 data=file,
                 file_name=f"data {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}.pkl",
                 #mime="application/pdf"
@@ -1038,7 +1038,7 @@ def demo():
                 #st.info(f"Explanation LLM: {st.session_state["explanation_demo"]}")
             file = save_conversation(correct_answer_bool)
             st.download_button(
-                label="Download conversations",
+                label="Download conversation",
                 data=file,
                 file_name=f"data {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}.pkl",
                 #mime="application/pdf"
