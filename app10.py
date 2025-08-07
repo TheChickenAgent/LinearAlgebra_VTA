@@ -1067,8 +1067,8 @@ page_names_to_funcs = {
     "User testing": demo,
     "Main menu": intro,
     #"Linear Algebra chat": chat_TF_generation,
-    #"Linear Algebra chat": chat,
-    #"Practise T/F questions": practice_true_false_questions,
+    "Linear Algebra chat": chat,
+    "Practise T/F questions": practice_true_false_questions,
 }
 
 demo_name = st.sidebar.selectbox("Select a practice mode:", page_names_to_funcs.keys())
