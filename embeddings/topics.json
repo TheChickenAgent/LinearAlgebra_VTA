@@ -1,0 +1,246 @@
+{
+    "Topics":{
+        "Systems of linear equations, Gaussian elimination": {
+            "section 1.1":
+            [
+                {"text":"A system of linear equations has: no solution; or exactly one solution; or infinitely many solutions.","metadata":{"type":"green fact", "page":[28], "section":"1.1"}},
+                {"text":"A system of linear equations is consistent if it has at least one solution.", "metadata":{"type":"text", "page":[28], "section":"1.1"}},
+                {"text":"A system of linear equations is inconsistent if it has no solution.", "metadata":{"type":"text", "page":[28], "section":"1.1"}},
+                {"text":"If the augmented matrices of two linear systems are row equivalent, then the two systems have the same solution set.", "metadata":{"type":"green fact", "page":[31], "section":"1.1"}}
+            ],
+            "section 1.2":[
+                {"text":"A rectangular matrix is in echelon form (or row echelon form) if it has the following three properties:\n1. All nonzero rows are above any rows of all zeros;\n2. Each leading entry of a row is in a column to the right of the leading entry of the row above it;\n3. All entries in a column below a leading entry are zeros.", "metadata":{"type":"definition", "page":[37], "section":"1.2"}},
+                {"text":"A matrix is in reduced echelon form if it has the following five properties:\n1. All nonzero rows are above any rows of all zeros;\n2. Each leading entry of a row is in a column to the right of the leading entry of the row above it;\n3. All entries in a column below a leading entry are zeros.\n4. The leading entry in each nonzero row is 1.\n5. Each leading 1 is the only nonzero entry in its column.", "metadata":{"type":"definition", "page":[37], "section":"1.2"}},
+                {"text":"Theorem: Uniqueness of the Reduced Echelon Form. Each matrix is row equivalent to one and only one reduced echelon matrix.", "metadata":{"type":"theorem", "page":[38], "section":"1.2"}},
+                {"text":"Algorithm: USING ROW REDUCTION TO SOLVE A LINEAR SYSTEM:\n1. Write the augmented matrix of the system.\n2. Use the row reduction algorithm to obtain an equivalent augmented matrix in echelon form. Decide whether the system is consistent. If there is no solution, stop; otherwise, go to the next step.\n3. Continue row reduction to obtain the reduced echelon form.\n4. Write the system of equations corresponding to the matrix obtained in step 3.\n5. Rewrite each nonzero equation from step 4 so that its one basic variable is expressed in terms of any free variables appearing in the equation.", "metadata":{"type":"algorithm", "page":[46], "section":"1.2"}},
+                {"text":"A pivot position in a matrix A is a location in A that corresponds to a leading 1 in the reduced echelon form of A. A pivot column is a column of A that contains a pivot position.", "metadata":{"type":"definition", "page":[39], "section":"1.2"}},
+                {"text":"Theorem: Existence and Uniqueness Theorem. A linear system is consistent if and only if the rightmost column of the augmented matrix is not a pivot column—that is, if and only if an echelon form of the augmented matrix has no row of the form [0 ... 0 b] with b nonzero. If a linear system is consistent, then the solution set contains either (i) a unique solution, when there are no free variables, or (ii) infinitely many solutions, when there is at least one free variable.", "metadata":{"type":"theorem", "page":[46], "section":"1.2"}}
+            ]
+        },
+        "Vector equations, Matrix": {
+            "section 1.3":[
+                {"text":"Parallelogram Rule for Addition. If u and v in R^2 are represented as points in the plane, then u + v corresponds to the fourth vertex of the parallelogram whose other vertices are u, 0, and v.", "metadata":{"type":"green fact", "page":[52], "section":"1.3"}},
+                {"text":"Algebraic Properties of R^n. For all u; v; w in R^n and all scalars c and d:\n1. u + v = v + u.\n2. (u + v) + w = u + (v + w).\n3. u + 0 = 0 + u = u.\n4. u + (-u) = (-u) + u = 0.\n5. c(u + v) = cu + cv.\n6. (c + d)u = cu + du.\n7. c(du) = cd(u).\n8. 1u = u.", "metadata":{"type":"green fact", "page":[53], "section":"1.3"}},
+                {"text":"A vector equation of the form x_1*a_1 + x_2*a_2 + ... + x_n*a_n = b has the same solution set as the linear system whose augmented matrix is [a_1 a_2 ... a_n b]. In particular, b can be generated as a linear combination of a_1, a_2, ..., a_n if and only if a solution exists to the linear system corresponding to the matrix [a_1 a_2 ... a_n b].", "metadata":{"type":"green fact", "page":[56], "section":"1.3"}},
+                {"text":"If v_1, ..., v_p are in R^n, then the set of all linear combinations of is the collection of v_1, ..., v_p is denoted by Span {v_1, ..., v_p} and is called the subset of R^n spanned (or generated) by v_1, ..., v_p. That is, Span {v_1, ..., v_p} is the collection of all vectors that can be written in the form c_1*v_1 + c₂*v_2 + … + c_p*v_p, with c_1, c_2, ..., c_p scalars.", "metadata":{"type":"definition", "page":[56], "section":"1.3"}}
+            ],
+            "section 1.4":[
+                {"text":"If A is an m x n matrix, with columns a_1, ..., a_n, and if x is in R^n, then the product of A and x, denoted by Ax, is the linear combination of the columns of A using the corresponding entries in x as weights; that is, Ax = [a_1 ... a_n] * [x_1, ... x_n]^T = a_1*x_1 + ... + a_n*x_n.", "metadata":{"type":"definition", "page":[61], "section":"1.4"}},
+                {"text":"Theorem: If A is an m x n matrix, with columns a_1, ..., a_n, and if b is in R^m, the matrix equation Ax = b has the same solution set as the vector equation x_1*a_1 + x₂*a_2 + ... + x_n*a_n = b which, in turn, has the same solution set as the system of linear equations whose augmented matrix is [a_1 a_2 ... a_n b].", "metadata":{"type":"theorem", "page":[62], "section":"1.4"}},
+                {"text":"The equation Ax = b has a solution if and only if b is a linear combination of the columns of A.", "metadata":{"type":"green fact", "page":[63], "section":"1.4"}},
+                {"text":"Theorem: Let A be an m x n matrix. Then the following statements are logically equivalent. That is, for a particular A, either they are all true statements or they are all false:\na. For each b in R^m, the equation Ax = b has a solution.\nb. Each b in R^m is a linear combination of the columns of A.\nc. The columns of A span R^m.\nd. A has a pivot position in every row.", "metadata":{"type":"theorem", "page":[63], "section":"1.4"}},
+                {"text":"Row-Vector Rule for Computing Ax. If the product Ax is defined, then the i th entry in Ax is the sum of the products of corresponding entries from row i of A and from the vector x.", "metadata":{"type":"green fact", "page":[64], "section":"1.4"}},
+                {"text":"Theorem: If A is an m x n matrix, u and v are vectors in R^n, and c is a scalar, then: \na. A(u + v) = Au + Av;\nb. A(cu) = c(Au).", "metadata":{"type":"theorem", "page":[65], "section":"1.4"}}
+            ]
+        },
+        "Solution sets and Linear independence": 
+        {
+            "section 1.5":[
+                {"text":"The homogeneous equation Ax = 0 has a nontrivial solution if and only if the equation has at least one free variable.", "metadata":{"type":"green fact", "page":[70], "section":"1.5"}},
+                {"text":"Theorem: Suppose the equation Ax = b is consistent for some given b, and let p be a solution. Then the solution set of Ax = b is the set of all vectors of the form w = p + v_h, where v_h is any solution of the homogeneous equation Ax = 0.", "metadata":{"type":"theorem", "page":[73], "section":"1.5"}},
+                {"text": "Algorithm: WRITING A SOLUTION SET (OF A CONSISTENT SYSTEM) IN PARAMETRIC VECTOR FORM:\n1. Row reduce the augmented matrix to reduced echelon form.\n2. Express each basic variable in terms of any free variables appearing in an equation.\n3. Write a typical solution x as a vector whose entries depend on the free variables, if any.\n4. Decompose x into a linear combination of vectors (with numeric entries) using the free variables as parameters.", "metadata":{"type":"algorithm", "page":[73], "section":"1.5"}}
+            ],
+            "section 1.7":[
+                {"text":"An indexed set of vectors {v_1, ..., v_k} in R^n is said to be linearly independent if the vector equation x_1*v_1 + ... + x_k*v_k = 0 has only the trivial solution.", "metadata":{"type":"definition", "page":[84], "section":"1.7"}},
+                {"text":"An indexed set of vectors {v_1, ..., v_k} in R^n is said to be linearly dependent if there exist weights c_1, ..., cₖ, not all zero, such that c_1*v_1 + ... + c_k*v_k = 0.", "metadata":{"type":"definition", "page":[84], "section":"1.7"}},
+                {"text":"The columns of a matrix A are linearly independent if and only if the equation Ax = 0 has only the trivial solution.", "metadata":{"type":"green fact", "page":[85], "section":"1.7"}},
+                {"text":"A set of two vectors {v_1, v_2} is linearly dependent if at least one of the vectors is a multiple of the other. The set is linearly independent if and only if neither of the vectors is a multiple of the other", "metadata":{"type":"green fact", "page":[86], "section":"1.7"}},
+                {"text":"Theorem: Characterization of Linearly Dependent Sets. An indexed set S = {v_1, ..., v_k} of two or more vectors is linearly dependent if and only if at least one of the vectors in S is a linear combination of the others. In fact, if S is linearly dependent and v_1 != 0, then some v_j (with j > 1) is a linear combination of the preceding vectors v_1, ..., v_{j-1}.", "metadata":{"type":"theorem", "page":[86], "section":"1.7"}},
+                {"text":"Theorem: If a set contains more vectors than there are entries in each vector, then the set is linearly dependent. That is, any set {v_1, ..., v_p} in R^n is linearly dependent if p > n.", "metadata":{"type":"theorem", "page":[87], "section":"1.7"}},
+                {"text":"Theorem: If a set S = {v_1, ..., v_k} in R^n contains a zero vector, then the set is linearly dependent.", "metadata":{"type":"theorem", "page":[87], "section":"1.7"}}
+            ]
+        },
+        "Linear Transformations, Matrix algebra":
+        {
+            "section 1.8":[
+                {"text": "A transformation (or function or mapping) T from R^n to R^m is a rule that assigns to each vector x in R^n a vector T(x) in R^m. The set R^n is called the domain of T, and R^m is called the codomain of T. The notation T: R^n --> R^m indicates that the domain of T is R^n and the codomain is R^m. For x in R^n, the vector T(x) in R^m is called the image of x (under the action of T ). The set of all images T(x) is called the range of T.", "metadata":{"type":"text", "page":[91, 92], "section":"1.8"}},
+                {"text":"A transformation (or mapping) T is linear if:\n1. T(u + v) = T(u) + T(v) for all u, v in the domain T.\n2. T(cu) = cT(u) for all scalars c and all u in the domain of T.", "metadata":{"type":"definition", "page":[94], "section":"1.8"}},
+                {"text":"If T is a linear transformation, then T(0) = 0 and T(cu + dv) = cT(u) + dT(v) for all vectors u, v in the domain of T and all scalars c, d.", "metadata":{"type":"green fact", "page":[94], "section":"1.8"}},
+                {"text":"T(c_1*v_1 + ... + c_p*v_p) = c_1*T(v_1) + ... + c_p*T(v_p)", "metadata":{"type":"green fact", "page": [94], "section":"1.8"}}
+            ],
+            "section 1.9":[
+                {"text":"Theorem: Let T: R^n --> R^m be a linear transformation. Then there exists a unique matrix A such that T(x) = Ax for all x in R^n. In fact, A is the m x n matrix whose j th column is the vector T(e_j), where e_j is the j th column of the identity matrix in R^n: A = [T(e_1) ... T(e_n)].", "metadata":{"type":"theorem", "page":[100], "section":"1.9"}},
+                {"text":"A mapping T: R^n --> R^m is said to be onto R^m if each b in R^m is the image of at least one x in R^n. Equivalently, T is onto R^m when the range of T is all of the codomain R^m. That is, T maps R^n onto R^m if, for each b in the codomain R^m, there exists at least one solution of T(x) = b.", "metadata":{"type":"definition", "page":[101], "section":"1.9"}},
+                {"text":"A mapping T: R^n --> R^m is said to be one-to-one if each b in R^m is the image of at most one x in Rn.", "metadata":{"type":"definition", "page":[104], "section":"1.9"}},
+                {"text":"Theorem: Let T: R^n --> R^m be a linear transformation. Then T is one-to-one if and only if the equation T(x) = 0 has only the trivial solution.", "metadata":{"type":"theorem", "page":[105], "section":"1.9"}},
+                {"text":"Theorem: Let T: R^n --> R^m be a linear transformation and let A be the standard matrix for T. Then:\na. T maps R^n onto R^m if and only if the columns of A span R^m;\nb. T is one-to-one if and only if the columns of A are linearly independent.", "metadata":{"type":"theorem", "page":[105], "section":"1.9"}}
+            ],
+            "section 2.1":[
+                {"text":"Theorem: Let A; B, and C be matrices of the same size, and let r and s be scalars.\na. A + B = B + A\nb. (A + B) + C = A + (B + C)\nc. A + 0 = 0 + A = A\nd. r(A + B) = rA + rB\ne. (r + s)A = rA + sA\nf. r(sA) = (rs)A", "metadata":{"type":"theorem", "page":[123], "section":"2.1"}},
+                {"text":"If A is an m x n matrix, and if B is an n x p matrix with columns b_1, ..., b_p, then the product AB is the m x p matrix whose columns are Ab_1, ..., Ab_p. That is, AB = A[b_1 b₂ ... b_p] = [Ab_1 Ab₂ ... Ab_p].", "metadata":{"type":"definition", "page":[125], "section":"2.1"}},
+                {"text":"Each column of AB is a linear combination of the columns of A using weights from the corresponding column of B.", "metadata":{"type":"green fact", "page":[125], "section":"2.1"}},
+                {"text":"ROW_i(AB) = ROW_i(A) * B.", "metadata":{"type":"green fact", "page":[127], "section":"2.1"}},
+                {"text":"Theorem: Let A be an m x n matrix, and let B and C have sizes for which the indicated sums and products are defined.\na. A(BC) = (AB)C (associative law of multiplication)\nb. A(B + C) = AB + AC (left distributive law)\nc. (B + C)A = BA + CA (right distributive law)\nd. r(AB) = (rA)B = A(rB) for any scalar r\ne. I_m A = A = A I_n (identity for matrix multiplication).", "metadata":{"type":"theorem", "page":[127], "section":"2.1"}},
+                {"text":"Warnings about matrix multiplication:\n1. In general, AB != BA.\n2. The cancellation laws do not hold for matrix multiplication. That is, if AB = AC, then it is not true in general that B = C.\n3. If a product AB is the zero matrix, you cannot conclude in general that either A = 0 or B = 0.", "metadata":{"type":"text", "page":[128], "section":"2.1"}},
+                {"text":"If A is an n x n matrix and if k is a positive integer, then A^k denotes the product of k copies of A: A^k = A*A*...*A (k factors).", "metadata":{"type":"green fact", "page":[129], "section":"2.1"}},
+                {"text":"Theorem: Let A and B denote matrices whose sizes are appropriate for the following sums and products.\na. (A^T)^T = A\nb.(A + B)^T = A^T + B^T\nc. For any scalar r, (rA)^T = rA^T\nd. (AB)^T = B^TA^T", "metadata":{"type":"theorem", "page":[129], "section":"2.1"}},
+                {"text":"The transpose of a product of matrices equals the product of their transposes in the reverse order.", "metadata":{"type":"green fact", "page":[129], "section":"2.1"}}
+            ]
+        },
+        "The Inverse of a Matrix":
+        {
+            "section 2.2":[
+                {"text":"A^{-1}A = I and AA^{-1} = I", "metadata":{"type":"green fact", "page":[135], "section":"2.2"}},
+                {"text":"A matrix that is not invertible is sometimes called a singular matrix.", "metadata":{"type":"text", "page":[135], "section":"2.2"}},
+                {"text":"Theorem: Let A = [ [a, b], [c, d] ]. If ad - bc != 0, then A is invertible and A^{-1} = (1/(ad - bc)) * [ [d, -b], [-c, a] ]. If ad - bc = 0, then A is not invertible.", "metadata":{"type":"theorem", "page":[136], "section":"2.2"}},
+                {"text":"detA = ad - bc.", "metadata":{"type":"green fact", "page":[136], "section":"2.2"}},
+                {"text":"Theorem: If A is an invertible n x n matrix, then for each b in R^n, the equation Ax = b has the unique solution x = A^{-1}b.", "metadata":{"type":"theorem", "page":[136], "section":"2.2"}},
+                {"text":"Theorem: If A is an invertible matrix, then A^{-1} is invertible and (A^{-1})^{-1} = A", "metadata":{"type":"theorem", "page":[138], "section":"2.2"}},
+                {"text":"Theorem: If A and B are n x n invertible matrices, then so is AB, and the inverse of AB is the product of the inverses of A and B in the reverse order. That is, (AB)^{-1} = B^{-1}A^{-1}.", "metadata":{"type":"theorem", "page":[138], "section":"2.2"}},
+                {"text":"Theorem: If A is an invertible matrix, then so is A^T, and the inverse of A^T is the transpose of A^{-1}. That is, (A^T)^{-1} = (A^{-1})^T.", "metadata":{"type":"theorem", "page":[138], "section":"2.2"}},
+                {"text":"The product of n x n invertible matrices is invertible, and the inverse is the product of their inverses in the reverse order.", "metadata":{"type":"green fact", "page":[138], "section":"2.2"}},
+                {"text":"If an elementary row operation is performed on an m x n matrix A, the resulting matrix can be written as EA, where the m x m matrix E is created by performing the same row operation on I_m.", "metadata":{"type":"green fact", "page":[139], "section":"2.2"}},
+                {"text":"Each elementary matrix E is invertible. The inverse of E is the elementary matrix of the same type that transforms E back into I.", "metadata":{"type":"green fact", "page":[139], "section":"2.2"}},
+                {"text":"Theorem: An n x n matrix A is invertible if and only if A is row equivalent to I_n, and in this case, any sequence of elementary row operations that reduces A to I_n also transforms I_n into A^{-1}.", "metadata":{"type":"theorem", "page":[140], "section":"2.2"}},
+                {"text":"ALGORITHM: FINDING A MATRIX'S INVERSE: Row reduce the augmented matrix [A I]. If A is row equivalent to I, then [A I] is row equivalent to [I A^{-1}]. Otherwise, A does not have an inverse.", "metadata":{"type":"algorithm", "page":[140], "section":"2.2"}}
+
+
+            ],
+            "section 2.3":[
+                {"text":"Theorem: INVERTIBLE MATRIX THEOREM. For A ∈ R^{n x n}, the following are all equivalent (either all true or all false):\na. A is invertible.\nb. A is row-equivalent to the n x n identity matrix.\nc. A has n pivot positions.\nd. Ax = 0 has only the trivial solution.\ne. The columns of A form a linearly independent set.\nf. The mapping x ↦ Ax is one-to-one.\ng. The equation Ax = b has at least one solution for each b in R^n.\nh. The columns of A span R^n.\ni. The linear transformation x ↦ Ax maps R^n onto R^n.\nj. There is an n x n matrix C such that CA = I.\nk. There is an n x n matrix D such that AD = I.\nl. A^T is an invertible matrix.", "metadata":{"type":"theorem", "page":[145], "section":"2.3"}},
+                {"text":"Let A and B be square matrices. If AB = I , then A and B are both invertible, with B = A^{-1} and A = B^{-1}.", "metadata":{"type":"green fact", "page":[146], "section":"2.3"}},
+                {"text": "Theorem: Let T: R^n → R^n be a linear transformation and let A be the standard matrix for T. Then T is invertible if and only if A is an invertible matrix. In that case, the linear transformation S given by S(x) = A^{-1}x is the unique function satisfying S(T(x)) = x for all x in R^n and T(S(x)) = x for all x in R^n.", "metadata": {"type":"theorem","page": [147],"section": "2.3"}}
+            ] 
+        },
+        "Determinants, Perspective projections":
+        {
+            "section 3.1":[
+                {"text":"The determinant of a 3 x 3 matrix A = [[a11, a12, a13], [a21, a22, a23], [a31, a32, a33]] is given by:\ndet(A) = a11*a22*a33 + a12*a23*a31 + a13*a21*a32 - a11*a23*a32 - a12*a21*a33 - a13*a22*a31.", "metadata":{"type":"text", "page":[197], "section":"3.1"}},
+                {"text":"The determinant of a 2 x 2 matrix A = [[a11, a12], [a21, a22]] is given by:\ndet(A) = a11*a22 - a12*a21.", "metadata":{"type":"text", "page":[197], "section":"3.1"}},
+                {"text":"The determinant of a 1 x 1 matrix A = [a11] is given by:\ndet(A) = a11.", "metadata":{"type":"text", "page":[197], "section":"3.1"}},
+                {"text":"For n ≥ 2, the determinant of an n x n matrix A = [a_{ij}] is the sum of n terms of the form +-a_{1j} det(A_{1j}), with plus and minus signs alternating, where the entries a_{11}, a_{12}, ..., a_{1n} are from the first row of A. In symbols:\ndet(A) = a_{11} det(A_{11}) - a_{12} det(A_{12}) + ... + (-1)^{1+n} a_{1n} det(A_{1n})\nor, more generally:\ndet(A) = Σ_{j=1}^n (-1)^{1+j} a_{1j} det(A_{1j})", "metadata":{"type":"definition", "page":[197], "section":"3.1"}},
+                {"text":"Theorem: The determinant of an n x n matrix A can be computed by a cofactor expansion across any row or down any column. The expansion across the i th row using the cofactors in C_{ij} = (-1)^{i+j} det(A_{ij} is: \n det(A) = a_{i1}C_{i1} + a_{i2}C_{i2} + ... + a_{in}C_{in}. The cofactor expansion down the j th column is:\n det(A) = a_{1j}C_{1j} + a_{2j}C_{2j} + ... + a_{nj}C_{nj}", "metadata":{"type":"theorem", "page":[198], "section":"3.1"}},
+                {"text":"Theorem: If A is a triangular matrix, then det(A) is the product of the entries on the main diagonal of A.", "metadata":{"type":"theorem", "page":[198], "section":"3.1"}}
+
+            ],
+            "section 3.2":[
+                {"text":"Theorem: Let A be a square matrix.\na. If a multiple of one row of A is added to another row to produce a matrix B, then det(B) = det(A).\nb. If two rows of A are interchanged to produce B, then det(B) = det(A).\nc. If one row of A is multiplied by k to produce B, then det(B) = k det(A).", "metadata":{"type":"theorem", "page":[203], "section":"3.2"}},
+                {"text":"If A is invertible and U is an upper triangular matrix obtained from A by row reduction with r row interchanges, then det(A) = (-1)^r x (product of pivots in U). If A is not invertible, then det(A) = 0.", "metadata":{"type":"green fact", "page":[205], "section":"3.2"}},
+                {"text":"Theorem: A square matrix A is invertible if and only if det(A) != 0.", "metadata":{"type":"theorem", "page":[205], "section":"3.2"}},
+                {"text":"Theorem: If A is an n x n matrix, then det(A^T) = det(A).", "metadata":{"type":"theorem", "page":[206], "section":"3.2"}},
+                {"text":"Theorem: Multiplicative Property\nIf A and B are n x n matrices, then det(AB) = (det(A))(det(B)).", "metadata":{"type":"theorem", "page":[207], "section":"3.2"}}
+
+            ],
+            "section 2.7":[
+                {"text":"A three-dimensional object is represented on the two-dimensional computer screen by projecting the object onto a viewing plane.", "metadata":{"type":"text", "page":[175], "section":"2.7"}},
+                {"text":"A perspective projection maps each point (x, y, z) onto an image point (x*; y*, 0) so that the two points and the eye position called the center of projection, are on a line.", "metadata":{"type":"text", "page":[175], "section":"2.7"}}
+            ]
+        },
+        "Vector Spaces": {
+            "section 4.1":[
+                {"text":"A vector space is a nonempty set V of objects, called vectors, on which are defined two operations: addition and multiplication by scalars (real numbers), subject to the following ten axioms (rules). The axioms must hold for all vectors u, v, and w in V and all scalars c and d:\n1. The sum of u and v, denoted by u + v, is in V.\n2. u + v = v + u.\n3. (u + v) + w = u + (v + w).\n4. There is a zero vector 0 in V such that u + 0 = u.\n5. For each u in V, there is a vector -u in V such that u + (-u) = 0.\n6. The scalar multiple of u by c, denoted by cu, is in V.\n7. c(u + v) = cu + cv.\n8. (c + d)u = cu + du.\n9. c(du) = (cd)u.\n10. 1u = u.", "metadata": {"type": "definition", "page": [226, 227], "section": "4.1"}},
+                {"text":"For each u in V and scalar c,\n1. 0u = 0\n2. c0 = 0\n3. -u = (-1)u", "metadata": {"type": "green fact", "page": [227], "section": "4.1"}},
+                {"text":"A subspace of a vector space V is a subset H of V that has three properties:\na. The zero vector of V is in H.\nb. H is closed under vector addition. That is, for each u and v in H, the sum u + v is in H.\nc. H is closed under multiplication by scalars. That is, for each u in H and each scalar c, the vector cu is in H.", "metadata":{"type":"definition", "page":[229], "section":"4.1"}},
+                {"text":"Theorem: If v_1, ..., v_p are in a vector space V, then Span{v_1, ..., v_p} is a subspace of V.", "metadata":{"type":"theorem", "page":[231], "section":"4.1"}},
+                {"text":"We call Span {v_1, ..., v_p} the subspace spanned (or generated) by {v_1, ..., v_p}.", "metadata":{"type":"text", "page":[231], "section":"4.1"}},
+                {"text":"Given any subspace H of V, a spanning (or generating) set for H is a set {v_1, ..., v_p} in H such that H = Span {v_1, ..., v_p}.", "metadata":{"type":"text", "page":[231], "section":"4.1"}}
+            ],
+            "section 4.2":[
+                {"text":"In applications of linear algebra, subspaces of Rn usually arise in one of two ways: (1) as the set of all solutions to a system of homogeneous linear equations or (2) as the set of all linear combinations of certain specified vectors.", "metadata":{"type":"text", "page":[235], "section":"4.2"}},
+                {"text":"The null space of an m x n matrix A, written as Nul A, is the set of all solutions of the homogeneous equation Ax = 0. In set notation, Nul A = {x : x is in R^n and Ax = 0}.", "metadata":{"type":"definition", "page":[236], "section":"4.2"}},
+                {"text":"Theorem: The null space of an m x n matrix A is a subspace of R^n. Equivalently, the set of all solutions to a system Ax = 0 of m homogeneous linear equations in n unknowns is a subspace of R^n.", "metadata":{"type":"theorem", "page":[236], "section":"4.2"}},
+                {"text":"There is no obvious relation between vectors in Nul A and the entries in A. We say that Nul A is defined implicitly, because it is defined by a condition that must be checked. No explicit list or description of the elements in Nul A is given. However, solving the equation Ax = 0 amounts to producing an explicit description of Nul A.", "metadata":{"type":"text", "page":[237], "section":"4.2"}},
+                {"text":"The column space of an m x n matrix A, written as Col A, is the set of all linear combinations of the columns of A. If A = [a_1 ... a_n], then Col A = Span{a_1, ..., a_n}.", "metadata":{"type":"definition", "page":[238], "section":"4.2"}},
+                {"text":"Theorem: The column space of an m x n matrix A is a subspace of Rm.", "metadata":{"type":"theorem", "page":[238], "section":"4.2"}},
+                {"text":"The column space of an m x n matrix A is all of Rm if and only if the equation Ax = b has a solution for each b in R^m.", "metadata":{"type":"green fact", "page":[239], "section":"4.2"}},
+                {"text":"If A is an m x n matrix, each row of A has n entries and thus can be identified with a vector in R^n. The set of all linear combinations of the row vectors is called the row space of A and is denoted by Row A. Each row has n entries, so Row A is a subspace of R^n.", "metadata":{"type":"text", "page":[239], "section":"4.2"}},
+                {"text":"Since the rows of A are identified with the columns of A^T, we could also write Col A^T in place of Row A.", "metadata":{"type":"text", "page":[239], "section":"4.2"}},
+                {"text":"A linear transformation T from a vector space V into a vector space W is a rule that assigns to each vector x in V a unique vector T(x) in W, such that:\n(i) T(u + v) = T(u) + T(v) for all u, v in V, and\n(ii) T(cu) = cT(u) for all u in V and all scalars c.", "metadata":{"type":"definition", "page":[241], "section":"4.2"}},
+                {"text":"The kernel (or null space) of such a T is the set of all u in V such that T(u) = 0 (the zero vector in W).", "metadata":{"type":"text", "page":[241], "section":"4.2"}},
+                {"text":"The range of T is the set of all vectors in W of the form T(x) for some x in V.", "metadata":{"type":"text", "page":[241], "section":"4.2"}},
+                {"text":"If T happens to arise as a matrix transformation, for example T(x) = Ax for some matrix A, then the kernel and the range of T are just the null space and the column space of A.", "metadata":{"type":"text", "page":[241], "section":"4.2"}}
+            ],
+            "section 4.3":[
+                {"text":"Theorem: An indexed set {v_1, ..., v_p} of two or more vectors, with v_1 != 0, is linearly dependent if and only if some v_j (with j > 1) is a linear combination of the preceding vectors, v_1, ..., v_{j-1}.", "metadata":{"type":"theorem", "page":[247], "section":"4.3"}},
+                {"text":"Let H be a subspace of a vector space V. A set of vectors B in V is a basis for H if\n(i) B is a linearly independent set, and\n(ii) the subspace spanned by B coincides with H; that is,\nH = Span B.", "metadata":{"type":"definition", "page":[247], "section":"4.3"}},
+                {"text":"The set {e_1, ..., e_n} is called the standard basis for R^n.", "metadata":{"type":"text", "page":[247], "section":"4.3"}},
+                {"text":"Theorem: The Spanning Set Theorem.\nLet S = {v_1, ..., v_p} be a set in a vector space V, and let H = Span{v_1, ..., v_p}.\na. If one of the vectors in S, for example v_k, is a linear combination of the remaining vectors in S, then the set formed from S by removing v_k still spans H.\nb. If H ≠ {0}, some subset of S is a basis for H.", "metadata":{"type":"theorem", "page":[249], "section":"4.3"}},
+                {"text":"The pivot columns of a matrix A form a basis for Col A.", "metadata":{"type":"theorem", "page":[250], "section":"4.3"}},
+                {"text":"The pivot columns of a matrix A are evident when A has been reduced only to echelon form. But, be careful to use the pivot columns of A itself for the basis of Col A. Row operations can change the column space of a matrix. The columns of an echelon form B of A are often not in the column space of A.", "metadata":{"type":"text", "page":[251], "section":"4.3"}},
+                {"text":"Theorem: If two matrices A and B are row equivalent, then their row spaces are the same. If B is in echelon form, the nonzero rows of B form a basis for the row space of A as well as for that of B.", "metadata":{"type":"theorem", "page":[251], "section":"4.3"}},
+                {"text":"A basis is also a linearly independent set that is as large as possible. If S is a basis for V , and if S is enlarged by one vector—say, w—from V , then the new set cannot be linearly independent, because S spans V , and w is therefore a linear combination of the elements in S.", "metadata":{"type":"text", "page":[252], "section":"4.3"}}
+            ],
+            "section 4.4":[
+                {"text":"Theorem: The Unique Representation Theorem.\nLet B = {b_1, ..., b_n} be a basis for a vector space V. Then for each x in V, there exists a unique set of scalars c_1, ..., cₙ such that x = c_1*b_1 + ... + c_n*b_n.", "metadata":{"type":"theorem", "page":[255], "section":"4.4"}},
+                {"text":"Suppose B = {b_1, ..., b_n} is a basis for a vector space V and x is in V. The coordinates of x relative to the basis B (or the B-coordinates of x) are the weights c_1, ..., cₙ such that x = c_1*b_1 + ... + c_n*b_n.", "metadata":{"type":"definition", "page":[256], "section":"4.4"}},
+                {"text":"If c_1, ..., cₙ are the B-coordinates of x, then the vector in R^n [x]_B = [c_1, ..., c_n]^T is the coordinate vector of x (relative to B), or the B-coordinate vector of x. The mapping x ↦ [x]_B is the coordinate mapping (determined by B).", "metadata":{"type":"text", "page":[256], "section":"4.4"}},
+                {"text":"Let P_B be the change-of-coordinates matrix from the basis B to the standard basis in R^n. So, P_B = [b_1, ..., b_n], then x = c_1*b_1 + ... + c_n*b_n can be written as\nx = P_B[x]_B.", "metadata":{"type":"text", "page":[258], "section":"4.4"}},
+                {"text":"Theorem: Let B = {b_1, ...b_n} be a basis for a vector space V . Then the coordinate mapping x ↦ [x]_B is a one-to-one linear transformation from V onto R^n.", "metadata":{"type":"theorem", "page":[259], "section":"4.4"}}
+
+            ],
+            "section 4.5":[
+                {"text":"Theorem: If a vector space V has a basis B = {b_1, ..., b_n}, then any set in V containing more than n vectors must be linearly dependent.", "metadata":{"type":"theorem", "page":[265], "section":"4.5"}},
+                {"text":"Theorem: If a vector space V has a basis of n vectors, then every basis of V must consist of exactly n vectors", "metadata":{"type":"theorem", "page":[265], "section":"4.5"}},
+                {"text":"If a vector space V is spanned by a finite set, then V is said to be finite-dimensional, and the dimension of V, written as dim V, is the number of vectors in a basis for V. The dimension of the zero vector space {0} is defined to be zero. If V is not spanned by a finite set, then V is said to be infinite-dimensional.", "metadata":{"type":"definition", "page":[266], "section":"4.5"}},
+                {"text":"Theorem: Let H be a subspace of a finite-dimensional vector space V. Any linearly independent set in H can be expanded, if necessary, to a basis for H. Also, H is finite-dimensional and dim H <= dim V.", "metadata":{"type":"theorem", "page":[267], "section":"4.5"}},
+                {"text":"Theorem: The Basis Theorem.\nLet V be a p-dimensional vector space, p >= 1. Any linearly independent set of exactly p elements in V is automatically a basis for V. Any set of exactly p elements that spans V is automatically a basis for V.", "metadata":{"type":"theorem", "page":[267], "section":"4.5"}},
+                {"text":"The rank of an m x n matrix A is the dimension of the column space and the nullity of A is the dimension of the null space.", "metadata":{"type":"definition", "page":[268], "section":"4.5"}},
+                {"text":"The rank of an m x n matrix A is the number of pivot columns and the nullity of A is the number of free variables. Since the dimension of the row space is the number of pivot rows, it is also equal to the rank of A.", "metadata":{"type":"green fact", "page":[268], "section":"4.5"}},
+                {"text":"Theorem: The Rank Theorem.\nThe dimensions of the column space and the null space of an m x n matrix A satisfy the equation: rank A + nullity A = number of columns in A", "metadata":{"type":"theorem", "page":[268], "section":"4.5"}},
+                {"text":"Theorem: INVERTIBLE MATRIX THEOREM (continued).\nLet A be an n x n matrix. Then the following statements are each equivalent to the statement that A is an invertible matrix:\nm. The columns of A form a basis of R^n.\nn. Col A = R^n.\no. rank A = n.\np. nullity A = 0\nq. Nul A = {0}.", "metadata":{"type":"theorem", "page":[270], "section":"4.5"}}                
+            ]
+        },
+        "Eigenvalues and Eigenvectors":
+        {
+            "section 5.1":[
+                {"text":"An eigenvector of an n x n matrix A is a nonzero vector x such that Ax = λx for some scalar λ. A scalar λ is called an eigenvalue of A if there is a nontrivial solution x of Ax = λx; such an x is called an eigenvector corresponding to λ.", "metadata":{"type":"definition", "page":[299], "section":"5.1"}},
+                {"text":"λ is an eigenvalue of an n x n matrix A if and only if the equation (A - λI)x = 0 has a nontrivial solution. The set of all solutions of this equation is the null space of the matrix (A - λI), called the eigenspace of A corresponding to λ. The eigenspace consists of the zero vector and all the eigenvectors corresponding to λ.", "metadata":{"type":"text", "page":[300], "section":"5.1"}},
+                {"text":"Theorem: The eigenvalues of a triangular matrix are the entries on its main diagonal.", "metadata":{"type":"theorem", "page":[302], "section":"5.1"}},
+                {"text":"Theorem: If v_1, ..., v_r are eigenvectors that correspond to distinct eigenvalues λ_1, ..., λ_r of an n x n matrix A, then the set {v_1, ..., v_r} is linearly independent.", "metadata":{"type":"theorem", "page":[302], "section":"5.1"}}
+            ],
+            "section 5.2":[
+                {"text":"Theorem: Properties of Determinants.\nLet A and B be n x n matrices.\na. A is invertible if and only if det(A) != 0.\nb. det(AB) = (det(A))(det(B)).\nc. det(A^T) = det(A).\nd. If A is triangular, then det(A) is the product of the entries on the main diagonal of A.\ne. A row replacement operation on A does not change the determinant. A row interchange changes the sign of the determinant. A row scaling also scales the determinant by the same scalar factor.", "metadata":{"type":"theorem", "page":[307, 308], "section":"5.2"}},
+                {"text":"Theorem: INVERTIBLE MATRIX THEOREM (continued).\nLet A be an n x n matrix. Then A is invertible if and only if r. The number 0 is not an eigenvalue of A.", "metadata":{"type":"theorem", "page":[308], "section":"5.2"}},
+                {"text":"The scalar equation det(A - λI) = 0 is called the characteristic equation of A.", "metadata":{"type":"text", "page":[308], "section":"5.2"}},
+                {"text":"A scalar λ is an eigenvalue of an n x n matrix A if and only if λ satisfies the characteristic equation det(A - λI) = 0.", "metadata":{"type":"green fact", "page":[308], "section":"5.2"}},
+                {"text":"It can be shown that if A is an n x n matrix, then det det(A - λI) is a polynomial of degree n called the characteristic polynomial of A.", "metadata":{"type":"text", "page":[309], "section":"5.2"}},
+                {"text":"In general, the (algebraic) multiplicity of an eigenvalue λ is its multiplicity as a root of the characteristic equation.", "metadata":{"type":"text", "page":[309], "section":"5.2"}},
+                {"text":"If A and B are n x n matrices, then A is similar to B if there is an invertible matrix P such that P^{-1}AP = B, or, equivalently, A = PBP^{-1}.", "metadata":{"type":"text", "page":[309], "section":"5.2"}},
+                {"text":"Theorem: If n x n matrices A and B are similar, then they have the same characteristic polynomial and hence the same eigenvalues (with the same multiplicities).", "metadata":{"type":"theorem", "page":[310], "section":"5.2"}}
+            ],
+            "section 5.3":[
+                {"text":"Theorem: The Diagonalization Theorem.\nAn n x n matrix A is diagonalizable if and only if A has n linearly independent eigenvectors.\nIn fact, A = PDP^{-1}, with D a diagonal matrix, if and only if the columns of P are n linearly independent eigenvectors of A. In this case, the diagonal entries of D are eigenvalues of A that correspond, respectively, to the eigenvectors in P.","metadata": {"type":"theorem","page": [315],"section": "5.3"}},
+                {"text":"Theorem: An n x n matrix with n distinct eigenvalues is diagonalizable.", "metadata":{"type":"theorem", "page":[317], "section":"5.3"}},
+                {"text":"Theorem: Let A be an n x n matrix whose distinct eigenvalues are λ_1, ..., λ_p.\na. For 1 ≤ k ≤ p, the dimension of the eigenspace for λ_k is less than or equal to the multiplicity of the eigenvalue λ_k.\nb. The matrix A is diagonalizable if and only if the sum of the dimensions of the eigenspaces equals n, and this happens if and only if (i) the characteristic polynomial factors completely into linear factors and (ii) the dimension of the eigenspace for each λ_k equals the multiplicity of λ_k.\n(c) If A is diagonalizable and B_k is a basis for the eigenspace corresponding to λ_k for each k, then the total collection of vectors in the sets B_1, ..., B_p forms an eigenvector basis for R^n.", "metadata":{"type":"theorem", "page":[318], "section":"5.3"}}
+            ]
+        },
+        "Diagonalization":
+        {
+            "section 5.3":[
+                {"text":"Theorem: The Diagonalization Theorem.\nAn n x n matrix A is diagonalizable if and only if A has n linearly independent eigenvectors.\nIn fact, A = PDP^{-1}, with D a diagonal matrix, if and only if the columns of P are n linearly independent eigenvectors of A. In this case, the diagonal entries of D are eigenvalues of A that correspond, respectively, to the eigenvectors in P.","metadata": {"type":"theorem","page": [315],"section": "5.3"}},
+                {"text":"Theorem: An n x n matrix with n distinct eigenvalues is diagonalizable.", "metadata":{"type":"theorem", "page":[317], "section":"5.3"}},
+                {"text":"Theorem: Let A be an n x n matrix whose distinct eigenvalues are λ_1, ..., λ_p.\na. For 1 ≤ k ≤ p, the dimension of the eigenspace for λ_k is less than or equal to the multiplicity of the eigenvalue λ_k.\nb. The matrix A is diagonalizable if and only if the sum of the dimensions of the eigenspaces equals n, and this happens if and only if (i) the characteristic polynomial factors completely into linear factors and (ii) the dimension of the eigenspace for each λ_k equals the multiplicity of λ_k.\n(c) If A is diagonalizable and B_k is a basis for the eigenspace corresponding to λ_k for each k, then the total collection of vectors in the sets B_1, ..., B_p forms an eigenvector basis for R^n.", "metadata":{"type":"theorem", "page":[318], "section":"5.3"}}
+            ]
+        },
+        "Orthogonality and Symmetric Matrices":
+        {
+            "section 6.1":[
+                {"text":"The dot product of vectors u = [u_1, u_2, ..., u_n] and v = [v_1, v_2, ..., v_n] in R^n is defined as: u · v = [u_1, u_2, ..., u_n][v_1, v_2, ..., v_n]^T = u_1*v_1 + u_2*v_2 + ... + u_n*v_n.", "metadata":{"type":"text", "page":[374], "section":"6.1"}},
+                {"text":"Theorem: Let u, v, and w be vectors in R^n, and let c be a scalar. Then:\na. u·v = v·u.\nb. (u+v)·w = u·w+v · w.\nc. (cu)·v = c(u·v) = u·(cv).\n.d. u·u ≥ 0, and u · u = 0 if and only if u = 0.", "metadata":{"type":"theorem", "page":[375], "section":"6.1"}},
+                {"text":"(c_1*u_1 + ... + c_pu_p)·w = c_1(u_1 · w) + ... + c_p(u_p · w)", "metadata":{"type":"green fact", "page":[375], "section":"6.1"}},
+                {"text":"The length (or norm) of v is the nonnegative scalar ||v|| defined by\n||v|| = sqrt(v·v) = sqrt(v_1^2 + v_2^2 + ... + v_n^2), and ||v||² = v·v.", "metadata":{"type":"definition", "page":[375], "section":"6.1"}},
+                {"text":"For any scalar c, the length of cv is |c| times the length of v. That is, ||cv|| = |c| · ||v||.", "metadata":{"type":"green fact", "page":[375], "section":"6.1"}},
+                {"text":"For u and v in R^n, the distance between u and v, written as dist(u, v), is the length of the vector u - v. That is, dist(u, v) = ||u - v||.", "metadata":{"type":"definition", "page":[377], "section":"6.1"}},
+                {"text":"Two vectors u and v in R^n are orthogonal (to each other) if u·v = 0.", "metadata":{"type":"definition", "page":[378], "section":"6.1"}},
+                {"text":"Theorem: The Pythagorean Theorem.\nTwo vectors u and v are orthogonal if and only if (||u+v||)^2 = (||u||)^2 + (||v||)^2.", "metadata":{"type":"theorem", "page":[378], "section":"6.1"}},
+                {"text":"1. A vector x is in W⊥ (the orthogonal complement of W) if and only if x is orthogonal to every vector in a set that spans W.\n2. W⊥ is a subspace of R^n.", "metadata":{"type":"green fact", "page":[378], "section":"6.1"}},
+                {"text":"Theorem: Let A be an m x n matrix. The orthogonal complement of the row space of A is the null space of A, and the orthogonal complement of the column space of A is the null space of A^T:\n(Row A)⊥ = Nul A and (Col A)⊥ = Nul A^T.", "metadata":{"type":"theorem", "page":[379], "section":"6.1"}}
+            ],
+            "section 6.2":[
+                {"text":"Theorem: If S = {u_1, ..., u_p} is an orthogonal set of nonzero vectors in R^n, then S is linearly independent and hence is a basis for the subspace spanned by S.", "metadata":{"type":"theorem", "page":[382], "section":"6.2"}},
+                {"text":"An orthogonal basis for a subspace W of R^n is a basis for W that is also an orthogonal set.", "metadata":{"type":"definition", "page":[383], "section":"6.2"}},
+                {"text":"Theorem: Let {u_1, ..., u_p} be an orthogonal basis for a subspace W of R^n. For each y in W, the weights in the linear combination y = c_1*u_1 + ... + c_pu_p are given by c_j = (y·u_j) / (u_j·u_j) for j = 1, ..., p.", "metadata":{"type":"theorem", "page":[383], "section":"6.2"}},
+                {"text":"A set {u_1, ..., u_p} is an orthonormal set if it is an orthogonal set of unit vectors. If W is the subspace spanned by such a set, then {u_1, ..., u_p} is an orthonormal basis for W, since the set is automatically linearly independent.", "metadata":{"type":"text", "page":[386], "section":"6.2"}},
+                {"text":"Theorem: An m x n matrix U has orthonormal columns if and only if U^TU = I.", "metadata":{"type":"theorem", "page":[387], "section":"6.2"}},
+                {"text":"Theorem: Let U be an m x n matrix with orthonormal columns, and let x and y be in R^n. Then:\na. ||Ux|| = ||x||\nb. (Ux)·(Uy) = x·y\nc. (Ux)·(Uy) = 0 if and only if x·y = 0.", "metadata":{"type":"theorem", "page":[387], "section":"6.2"}}
+            ],
+            "section 7.1":[
+                {"text":"A symmetric matrix is a matrix A such that AT = A.", "metadata":{"type":"text", "page":[443], "section":"7.1"}},
+                {"text":"Theorem: If A is symmetric, then any two eigenvectors from different eigenspaces are orthogonal", "metadata":{"type":"theorem", "page":[444], "section":"7.1"}},
+                {"text":"Theorem: An n x n matrix A is orthogonally diagonalizable if and only if A is a symmetric matrix.", "metadata":{"type":"theorem", "page":[444], "section":"7.1"}},
+                {"text":"Theorem: The Spectral Theorem for Symmetric Matrices. An n x n symmetric matrix A has the following properties:\na. A has n real eigenvalues, counting multiplicities.\nb. The dimension of the eigenspace for each eigenvalue equals the multiplicity of that eigenvalue as a root of the characteristic equation.\nc. The eigenspaces are mutually orthogonal, in the sense that eigenvectors corresponding to different eigenvalues are orthogonal.\nd. A is orthogonally diagonalizable.", "metadata":{"type":"theorem", "page":[445], "section":"7.1"}}
+
+            ]
+        }
+    }
+}
