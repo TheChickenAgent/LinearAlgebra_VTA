@@ -425,6 +425,307 @@ def chat():
                 st.session_state.messages_chat.append({"role": "references", "content": ref})
             #print(st.session_state.messages_chat)
 
+
+def chat_VTA():
+    st.title("QA chat for Linear Algebra with LearnLM")
+    st.markdown("This chat interface allows you to ask open questions about Linear Algebra. Type 'clear' to reset the chat history.")
+
+    openai_client = OpenAI(api_key=OPENAI_API)
+    genai_client = genai.Client(api_key=GOOGLE_API)
+
+    if "openai_model" not in st.session_state:
+        st.session_state["openai_model"] = "o4-mini"
+    if "cont_id" not in st.session_state:
+        cont = openai_client.containers.create(name="test")
+        st.session_state["cont_id"] = cont.id
+
+    if "gemini_model" not in st.session_state:
+        st.session_state["gemini_model"] = "learnlm-2.0-flash-experimental"
+
+    if "messages_VTA" not in st.session_state:
+        st.session_state["messages_VTA"] = []
+
+    if "init_chat_TF_VTA" not in st.session_state:
+        st.session_state["init_chat_TF_VTA"] = True
+
+    for message in st.session_state["messages_VTA"]:
+        if message["role"] == "references":
+            with st.chat_message("references", avatar="📖"):
+                st.markdown(message["content"])
+        else:
+            with st.chat_message(message["role"]):
+                st.markdown(message["content"])
+
+    if query := st.chat_input("Ask a question about Linear Algebra."):
+        if "clear" == query.lower():
+            st.session_state["messages_VTA"] = []
+            st.session_state["init_chat_TF_VTA"] = True
+            if "chat_VTA" in st.session_state:
+                st.session_state["chat_VTA"] = None
+            st.rerun()
+        else:
+            st.session_state.messages_VTA.append({"role": "user", "content": query})
+            with st.chat_message("user"):
+                st.markdown(query)
+            if st.session_state["init_chat_TF_VTA"] == True:
+                st.session_state["init_chat_TF_VTA"] = False
+                print("Starting")
+
+                # Retrieve relevant context from the vector database
+                retrieved_docs = db_openai.similarity_search(query, k=4)
+                context = "\n\n".join(doc.page_content for doc in retrieved_docs)
+                references = get_page_numbers([doc.metadata['page'] for doc in retrieved_docs])
+                print(references)
+
+                # Build custom prompt
+                # Combine message history with the custom prompt as system message
+                custom_prompt = (
+                    "You are an assistant for question-answering tasks in linear algebra. "
+                    "Your are given a True/False statement. You must include 'True', 'False' or 'I don't know' in your answer. "
+                    "If the statement is 'False', a counter-example is sufficient. "
+                    "If the statement is 'True', you briefly outline a proof and/or mention relevant theorems. "
+                    "If you are not sure, you say 'I don't know'. "
+                    "Please format as follows:\n"
+                    "- The question should start with 'Q:' followed by the question text.\n"
+                    "- The explanation should start with 'E:' followed by the explanation text.\n"
+                    "- The answer should start with 'A:' followed by 'True' or 'False'.\n"
+                    "For example:\n"
+                    "Q: The determinant of a matrix is always non-negative.\n"
+                    "E: The determinant can be negative depending on the matrix. For example, $\\begin{pmatrix} 1 & 0 \\\\ 0 & -1 \\end{pmatrix}$.\n"
+                    "A: False\n"
+                    "Please use LaTeX formatting for mathematical expressions by writing them between dollar signs."
+                    "For example, to write a matrix, use $\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}$. " 
+                    "You can write and run code to answer the question. "
+                    "The question is: " + query + ". "
+                )
+                # Retrieve relevant context from the vector database
+                retrieved_docs = db_openai.similarity_search(query, k=4)
+                context = "\n\n".join(doc.page_content for doc in retrieved_docs)
+
+                rag_prompt = (
+                    "Use the following pieces of retrieved context to answer the question. "
+                    "\n\nContext:\n" + context
+                )
+                prompt = custom_prompt + rag_prompt
+
+                try:
+                    response = openai_client.responses.create(
+                        model=st.session_state["openai_model"],
+                        tools=[{"type": "code_interpreter", "container": st.session_state["cont_id"]}],
+                        input=prompt,
+                    )
+                    # Extract the answer from the response
+                    o4_mini_answer = extract_llm_response_code_interpreter(response.output)
+                except Exception as e:
+                    print(f"Error generating questions.\nError: {e}")
+                
+                response_content = o4_mini_answer
+                explanation_lines = []
+                answer = ""
+                collecting_explanation = False
+
+                for line in response_content.split("\n"):
+                    line = line.strip()
+                    if line.startswith("Q:"):
+                        question = line[2:].strip()
+                        collecting_explanation = False
+                    elif line.startswith("E:"):
+                        explanation_lines.append(line[2:].strip())
+                        collecting_explanation = True
+                    elif line.startswith("A:"):
+                        answer = line[2:].strip().lower() == "true"
+                        collecting_explanation = False
+                    elif collecting_explanation:
+                        explanation_lines.append(line)
+                explanation = "\n".join(explanation_lines)
+
+                print(f"Q: {question}")
+                print(f"E: {explanation}")
+                print(f"A: {answer}")
+
+
+                #Use LearnLM
+                if explanation == "" or answer == "":
+                    print(f"Explanation: {explanation}")
+                    print(f"Answer: {answer}")
+                    st.error("Error: The explanation or answer is missing from the response.")
+                time.sleep(1) # Simulate processing time
+
+                # Build custom prompt
+                custom_prompt_gemini = (
+                    "You are an assistant for question-answering tasks in linear algebra. "
+                    "The linear algebra course is taught at a university level (Bachelor). "
+                    "The user would like to get clarification on a True/False question. "
+                    "The question is: " + question + ". "
+                    "The explanation is: " + explanation + ". "
+                    "The answer is: " + str(answer) + ". "
+                    "Please use LaTeX formatting for mathematical expressions by writing them between dollar signs."
+                    "For example, to write a matrix, use $\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}$. "
+                    "You can write and run code to answer the question. "
+                    "DO NOT GIVE THE ANSWER TO THE QUESTION DIRECTLY. "
+                    "Do not give the answer to the student. "
+                    "If there is a counter example in the explanation, do not directly mention it. "
+                    "DO NOT REFER TO THE EXPLANATION GIVEN TO YOU AS THE STUDENT DOES NOT HAVE ACCESS TO IT. USE IT TO HELP THE STUDENT. "
+                    "The students should learn from iteracting. "
+                    "You can give hints, but also ask for clarification or additional information if needed. "
+                )
+
+                chat = genai_client.chats.create(
+                    model=st.session_state["gemini_model"],
+                    config=types.GenerateContentConfig(system_instruction=custom_prompt_gemini, tools=[types.Tool(code_execution=types.ToolCodeExecution)]),                
+                )
+
+                st.session_state["chat_VTA"] = chat
+        
+            # Retrieve relevant context from the vector database
+            #query_rag = f"Question: {question}\nExplanation: {explanation}\nAnswer: {answer}"
+            retrieved_docs = db_openai.similarity_search(query, k=4)
+            context = "\n\n".join(doc.page_content for doc in retrieved_docs)
+            references = get_page_numbers([doc.metadata['page'] for doc in retrieved_docs])
+            print(references)
+
+            total_query = f"Use the following pieces of retrieved context to aid the explanation: {context}\n\nPlease try and answer the user query: {query}"
+
+            try:
+                response = st.session_state["chat_VTA"].send_message(total_query)
+                answer = response.text
+            except Exception as e:
+                st.error(f"Error processing LearnLM.\nError: {e}")
+
+            answer = transform_latex_text(str(answer))
+
+            with st.chat_message("assistant"):
+                answer = st.write_stream(stream_string_data(str(answer)))
+            st.session_state["messages_VTA"].append({"role": "assistant", "content": answer})
+
+            if references:
+                with st.chat_message("references", avatar="📖"):
+                    if len(references) == 1:
+                        ref = f"Reference: page {references[0]}"
+                    else:
+                        ref = f"References: pages {", ".join(references[:-1])}, and {references[-1]}"
+                    st.write(ref)
+                #st.session_state.messages.append({"role": "assistant", "content": response})
+                st.session_state["messages_VTA"].append({"role": "references", "content": ref})
+
+
+
+def chat_direct():
+    st.title("QA chat for Linear Algebra direct")
+    st.markdown("This chat interface allows you to ask open questions about Linear Algebra. Type 'clear' to reset the chat history.")
+
+    #genai_client = genai.Client(api_key=GOOGLE_API)
+    llm = OpenAI(api_key=OPENAI_API)
+
+    if "openai_model" not in st.session_state:
+        st.session_state["openai_model"] = "o4-mini"
+    if "init_state" not in st.session_state:
+        st.session_state["init_state"] = True
+    if "cont_id" not in st.session_state:
+        cont = llm.containers.create(name="test")
+        st.session_state["cont_id"] = cont.id
+
+    if "messages_chat" not in st.session_state:
+        st.session_state.messages_chat = []
+
+    for message in st.session_state.messages_chat:
+        if message["role"] == "references":
+            with st.chat_message("references", avatar="📖"):
+                st.markdown(message["content"])
+        else:
+            with st.chat_message(message["role"]):
+                st.markdown(message["content"])
+
+    if query := st.chat_input("Ask a question about Linear Algebra."):
+        if "clear" == query.lower():
+            #print(st.session_state.messages_chat)
+            #safe_time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+            #with open(f'chats/Open_chat_A_list_{safe_time}.pkl', 'wb') as f:
+            #    pickle.dump(st.session_state.messages_chat, f)
+            st.session_state.messages_chat = []
+            #if "open_chat" in st.session_state:
+            #   del st.session_state["open_chat"]
+            st.rerun()
+        else:
+            st.session_state.messages_chat.append({"role": "user", "content": query})
+            with st.chat_message("user"):
+                st.markdown(query)
+            #print(query)
+
+            # Retrieve relevant context from the vector database
+            retrieved_docs = db_openai.similarity_search(query, k=4)
+            context = "\n\n".join(doc.page_content for doc in retrieved_docs)
+            references = get_page_numbers([doc.metadata['page'] for doc in retrieved_docs])
+            print(references)
+
+            # Build custom prompt
+            # Combine message history with the custom prompt as system message
+            custom_prompt = (
+                "You are an assistant for question-answering tasks in linear algebra. "
+                "Your are given a True/False statement. You must include 'True', 'False' or 'I don't know' in your answer. "
+                "If the statement is 'False', a counter-example is sufficient. "
+                "If the statement is 'True', you briefly outline a proof and/or mention relevant theorems. "
+                "If you are not sure, you say 'I don't know'. "
+                "Please format as follows:\n"
+                "- The question should start with 'Q:' followed by the question text.\n"
+                "- The explanation should start with 'E:' followed by the explanation text.\n"
+                "- The answer should start with 'A:' followed by 'True' or 'False'.\n"
+                "For example:\n"
+                "Q: The determinant of a matrix is always non-negative.\n"
+                "E: The determinant can be negative depending on the matrix. For example, $\\begin{pmatrix} 1 & 0 \\\\ 0 & -1 \\end{pmatrix}$.\n"
+                "A: False\n"
+                "Please use LaTeX formatting for mathematical expressions by writing them between dollar signs."
+                "For example, to write a matrix, use $\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}$. " 
+                "You can write and run code to answer the question. "
+                "The question is: " + query + ". "
+            )
+            # Retrieve relevant context from the vector database
+            retrieved_docs = db_openai.similarity_search(query, k=4)
+            context = "\n\n".join(doc.page_content for doc in retrieved_docs)
+
+            rag_prompt = (
+                "Use the following pieces of retrieved context to answer the question. "
+                "\n\nContext:\n" + context
+            )
+            prompt = custom_prompt + rag_prompt
+
+            try:
+                response = llm.responses.create(
+                    model=MODEL_QUESTION_GENERATION,
+                    tools=[{"type": "code_interpreter", "container": st.session_state["cont_id"]}],
+                    input=prompt,
+                )
+                # Extract the answer from the response
+                answer_llm = extract_llm_response_code_interpreter(response.output)
+                #print(f"Answer: {answer_llm}")
+                if answer_llm == "":
+                    raise ValueError("Empty answer received from LLM.")
+            except Exception as e:
+                print(f"Error generating questions.\nError: {e}")
+
+
+            # Prepare messages: system prompt + previous messages + latest user query
+            messages = [{"role": "system", "content": custom_prompt}]
+            messages += [{"role": m["role"], "content": m["content"]} for m in st.session_state.messages_chat if m["role"] != "references"]
+            # Overwrite the last user message to ensure it includes the context
+            if messages and messages[-1]["role"] == "user":
+                messages[-1]["content"] = query
+
+            response = transform_latex_text(str(answer_llm))
+
+            with st.chat_message("assistant"):
+                response_LearnLM = st.write_stream(stream_string_data(response))
+            st.session_state.messages_chat.append({"role": "assistant", "content": response_LearnLM})
+            if references:
+                with st.chat_message("references", avatar="📖"):
+                    if len(references) == 1:
+                        ref = f"Reference: page {references[0]}"
+                    else:
+                        ref = f"References: pages {", ".join(references[:-1])}, and {references[-1]}"
+                    st.write(ref)
+                st.session_state.messages_chat.append({"role": "references", "content": ref})
+            #print(st.session_state.messages_chat)
+
 def transform_latex_text(text):
     # Replace display math block with inline math (square brackets to dollar signs)
     text = re.sub(r"\[\s*(.*?)\s*\]", r'$\1$', text, flags=re.DOTALL)
@@ -1071,7 +1372,9 @@ page_names_to_funcs = {
     "Main menu": intro,
     "User testing": demo,
     #"Linear Algebra chat": chat_TF_generation,
-    "Linear Algebra chat": chat,
+    #"Linear Algebra chat": chat,
+    "Linear Algebra chat": chat_VTA,
+    "Linear Algebra direct": chat_direct,
     "Practise TFQ": practice_true_false_questions,
 }
 
